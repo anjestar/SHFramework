@@ -63,7 +63,7 @@ function s_user_data_by_uid($uid=false) {
 
 
 //按screen_name获取用户信息
-function s_user_data_by_nickname($nickname) {
+function s_user_by_nickname($nickname) {
     if (s_bad_string($nickname)
         || ( $mem = s_memcache_global() ) === false
     ) {
@@ -90,7 +90,7 @@ function s_user_data_by_nickname($nickname) {
 
 //通过个性域名获取用户信息
 //$domain: 只需要为hiduan即可，不需要http://weibo.com/hiduan
-function s_user_data_by_domain($domain) {
+function s_user_by_domain($domain) {
     if (s_bad_string($domain)
         || ( $mem = s_memcache_global() ) === false
     ) {
@@ -111,12 +111,12 @@ function s_user_data_by_domain($domain) {
         $mem->set($key, $uid, 0, 3600);
     }
 
-    return s_user_data_by_uid($uid);
+    return s_user_by_uid($uid);
 }
 
 
 //获取用户的微博列表，超过200条返回false
-function s_user_weibo_list_by_uid($uid, $page=1, $count=20) {
+function s_weibo_list_by_uid($uid, $page=1, $count=20) {
     if (s_bad_id($uid)
         || ( $mem = s_memcache_global() ) === false
     ) {
@@ -172,15 +172,6 @@ function s_user_weibo_list_by_uid($uid, $page=1, $count=20) {
     }
 
     return $data;
-}
-
-
-function get_weibo_list_by_name($name, $page=1, $count=20) {
-    if (false === ( $user = get_user_by_token($naem) )) {
-        return false;
-    }
-
-    return get_weibo_list_by_uid($user["id"]);
 }
 
 
