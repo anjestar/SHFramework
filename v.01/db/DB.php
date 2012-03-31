@@ -162,6 +162,19 @@ function s_db_desc($sql) {
     //$query  = substr($sql, 0, strpos(" ", $sql)) === "select";
     //$update = substr($sql, 0, strpos(" ", $sql)) === "update";
     //TODO: 测试之用
+
+    //select * from user where `uid`=1 and 'age'='male'
+    //update user set `age`="male" where `uid`=1;
+    //insert into `user` (`age`) values ("24") where `uid`=1;
+    $sql = trim($sql);
+
+    $type = substr($sql, 0, strpos($sql, " "));
+
+    if () {}
+
+
+
+
     return array(
         //查询类型
         "type"    => "select",
