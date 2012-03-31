@@ -54,7 +54,7 @@ function s_bad_0id(&$id, &$var=false) {
 }
 
 
-function s_bad_string(&$str, &$var=false) {
+function s_bad_string(&$str, &$var=false, $trim=true) {
     if (!is_string($str)
         || $str !== strval($str)
         || empty($str)
@@ -66,6 +66,9 @@ function s_bad_string(&$str, &$var=false) {
         $var = strval($str);
     }
 
+    if ($trim) {
+        $var = trim($var);
+    }
 
     return false;
 }
