@@ -5,6 +5,11 @@
  *
  * Jory <jorygong@gmail.com>
  * 2006-4-20
+ *
+ *
+ * modify @: 2012-03-30   by Duanyong: coderduan@gmail.com
+ *
+ *
 **********************************************************/
 
 require_once('MDB2.php');
@@ -166,11 +171,18 @@ function s_db_desc($sql) {
     //select * from user where `uid`=1 and 'age'='male'
     //update user set `age`="male" where `uid`=1;
     //insert into `user` (`age`) values ("24") where `uid`=1;
-    $sql = trim($sql);
+    $sql    = trim($sql);
+    $type   = substr($sql, 0, strpos($sql, " "));
 
-    $type = substr($sql, 0, strpos($sql, " "));
+    $sql    = substr($sql, strlen($type));
 
-    if () {}
+    //获取表字段
+    $fields = array();
+    if ($type === "select") {
+        //查看有没有*符号
+
+    }
+
 
 
 
