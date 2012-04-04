@@ -1,23 +1,26 @@
 <?php
 ////////////////////////////////////////////////////////////////////////////////
 //
-// devinc.bad.php
-//	判断错误的函数，参数错误返回true，正确返回false
+// devinc.sql.php
+//	分析sql语言中关键字及对应的值
 //
-//	s_bad_id($id)
-//	    判断数字是否正确（大于0）
+//	s_sql_select($sql, $from, $select=0)
+//	    以数组返回select后的查询关键字
 //  
-//	s_bad_0id($id)
-//	    判断数字是否正确（等于0也可以）
+//	s_sql_table($sql, $select, $update, $insert, $from)
+//	    返回sql语句中的表名
 //  
-//	s_bad_string($string)
-//	    判断字符串是否正确
+//	s_sql_where($sql, $where, $order=false, $group=false, $limit=false)
+//	    以数组返回where后的条件关键字
 //
-//	s_bad_array($string, &$var)
-//	    判断数组否是正确，如果正确赋值给$var变量
+//	s_sql_group($sql, $group=0, $order=false, $limit=false)
+//	    以数组返回group后的分组关键字
 //
-//	s_bad_email($email, $var)
-//	    判断邮箱地址是否正确
+//	s_sql_order($sql, $order, $group=false, $limit=false)
+//	    以数组返回order后的排序关键字
+//
+//	s_sql_limit($sql, $limit) {
+//	    以数组返回limit后的列表范围关键字
 //
 //
 //
@@ -113,7 +116,6 @@ function s_sql_select($sql, $from, $select=0) {
 
 
 //TODO:
-$sql = "select id, uid, `name`, class from user where uid=1 and age=25 order by uid desc";
 function s_sql_group($sql, $group=0, $order=false, $limit=false) {
     if (s_bad_string($sql, $sql)) {
         return false;
@@ -123,7 +125,6 @@ function s_sql_group($sql, $group=0, $order=false, $limit=false) {
 }
 
 
-//$sql = "select id, uid, `name`, class from user where uid=1 and age=25 order by uid desc, group by xx limit 10";
 function s_sql_order($sql, $order, $group=false, $limit=false) {
     if (s_bad_string($sql)) {
         return false;
