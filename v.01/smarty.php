@@ -7,6 +7,7 @@
 **********************************************************/
 
 require_once("Smarty/Smarty.class.php");
+
 class smarty_client extends Smarty { 
    function __construct() { 
 
