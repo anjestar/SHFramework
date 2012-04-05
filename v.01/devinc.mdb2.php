@@ -4,22 +4,42 @@
 // devinc.mbd2.php
 //	将mdb2的操作封装起来。此文件实现了读写分离操作，调用者不用关心主从数据库。
 //
-//	s_bad_id($id)
-//	    判断数字是否正确（大于0）
+//
+//	s_db_plink()
+//	    返回主数据库链接（写操作）
 //  
-//	s_bad_0id($id)
-//	    判断数字是否正确（等于0也可以）
+//	s_db_slink()
+//	    返回从数据库链接（读操作）
 //  
-//	s_bad_string($string)
-//	    判断字符串是否正确
+//	s_db_close($db)
+//	    关闭数据库链接
 //
-//	s_bad_array($string, &$var)
-//	    判断数组否是正确，如果正确赋值给$var变量
+//	s_db_list($sql)
+//      返回列表数据（不从memcache缓存中获取数据）
 //
-//	s_bad_email($email, $var)
-//	    判断邮箱地址是否正确
+//  s_db_row($sql)
+//      返回某行数据（不从memcache缓存中获取数据）
 //
+//  s_db_one($sql)
+//      返回某个字段值（不从memcache缓存中获取数据）
 //
+//  s_db_exec($sql)
+//      执行sql语句（update或insert）
+//
+//  s_db($action, $v1, $v2)
+//      对数据操作（最常用语句），如有APP_DB_PREFIX常量，自动添加到表名前
+//      1、插入数据
+//          s_db("user:insert", array("uid" => 1, "name" => "duanyong"))
+//
+//      2、更新数据
+//          s_db("user:update", array("id" => 1), array("uid" => 1, "name" => "duanyong"))
+//
+//      3、删除数据 XXX 慎用：除非表结构中status字段且可取负值 XXX
+//          s_db("user:delete", array("id" => 1))   //数组参数，指定表主键与值
+//          s_db("user:delete", 1)                  //数字参数，自动对应表主键
+//
+//  s_db_primary($sql, $id)
+//      返回表主键对应的数据
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,11 +87,12 @@ function &s_db_slink() {
 	}
 
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+
 	return $db;
 }
 
 //Disconnecting a database
-function s_db_close(&$dbh) {
+function &s_db_close(&$dbh) {
 	if (is_object($dbh)) {
         try {
             $dbh->disconnect();
@@ -209,14 +230,15 @@ function s_db($table, &$v1, &$v2=false) {
 
     } else if ($action === "insert") {
         // 插入数据
-        $ret = s_db_insert($table, $v1);
+        $ret = _s_db_insert($table, $v1);
 
     } else if ($action === "update") {
         // 更新
-        $ret = s_db_update($table, $v1, $v2);
+        $ret = _s_db_update($table, $v1, $v2);
 
     } else if ($action === "delete") {
         // 删除
+        $ret = _s_db_delete($table, $v1);
     }
 
 
@@ -241,7 +263,7 @@ function s_db_primary($table, $id) {
 
 
 // 插入数据到数据库。其中$data已经包含了对应的主键
-function s_db_insert($table, &$data) {
+function _s_db_insert($table, &$data) {
     if (s_bad_string($table)
         || s_bad_array($data)
     ) {
@@ -304,7 +326,7 @@ function s_db_insert($table, &$data) {
 
 
 // 更新数据，其中$v1是原始数据，$v2是需更新的字段，其中不能包括主键
-function s_db_update($table, &$v1, &$v2) {
+function _s_db_update($table, &$v1, &$v2) {
     if (s_bad_string($table)
         || s_bad_array($v1)
         || s_bad_array($v2)
@@ -329,6 +351,24 @@ function s_db_update($table, &$v1, &$v2) {
 
     $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
     $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`= {$v1[$pid]}";
+
+    return s_db_exec($sql);
+}
+
+
+
+function _s_db_delete($table, $v1) {
+    if (s_bad_string($table)
+        //是数组取主键值
+        || !( $v1 = is_array($v1) && isset($v1["id"]) ? intval($v1["id"]) : $v1 )
+        || s_bad_id($v1)
+    ) {
+        return s_log_arg();
+    }
+
+
+    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
+    $sql  = "update `{$prev}{$table}` set `status`=-1 where `id`= {$v1}";
 
     return s_db_exec($sql);
 }
