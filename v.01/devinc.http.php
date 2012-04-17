@@ -2,95 +2,128 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // devinc.http.php
-//	发送http请求的函数
+//	通过http请求获取数据的相关函数
 //
-//	s_bad_id($id)
-//	    判断数字是否正确（大于0）
+//	s_http_response($url, &$params, $method)
+//	    返回一个http response
 //  
-//	s_bad_0id($id)
-//	    判断数字是否正确（等于0也可以）
+//	s_http_get($url, &$params=false)
+//	    返回通过get获取的response对象
 //  
-//	s_bad_string($string)
-//	    判断字符串是否正确
+//	s_http_post($url, &$params=false)
+//	    返回通过post获取的response对象
 //
-//	s_bad_array($string, &$var)
-//	    判断数组否是正确，如果正确赋值给$var变量
-//
-//	s_bad_email($email, $var)
-//	    判断邮箱地址是否正确
+//	s_http_json($url, &$params=false, $method=true)
+//	    以jsonr对象返回数据
 //
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-require_once ("HTTP/Request.php");
 
-function s_http_json(&$url, &$params, $method) {
+function s_http_response($url, &$params, $method) {
+    if (s_bad_string($url)) {
+        return false;
+    }
+
+    if ($params === false) {
+        $params = array();
+    }
+
+
+    $curl = curl_init();
+
+    curl_setopt($curl, CURLOPT_HEADER, 0);
+    curl_setopt($curl, CURLOPT_VERBOSE, 0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+
+    if (isset($params["cookie"])) {
+        //有cookie
+        $arr = array();
+
+        foreach($params["cookei"] as $key => $value) {
+            $arr[] = $key . "=" . urlencode($value);
+        }
+
+        curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
+
+        unset($params["cookie"]);
+    }
+
+    if (isset($params["files"])) {
+        //有文件要上传
+        curl_setopt($curl, CURLOPT_POST, 1);
+
+        foreach ($params["files"] as $value) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+        }
+
+        unset($params["file"]);
+    }
+
+    if (isset($params["image"])) {
+        //有图片要上传
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params["image"]);
+
+        unset($params["image"]);
+    }
+
+    $arr = array();
+
+    foreach ($params as $key => $value) {
+        $arr[] = $key . "=" . urlencode($value);
+    }
+
+    if ($method !== true) {
+        //GET
+        $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
+
+    } else {
+        //POST
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $arr));
+    }
+
+    //加载URL
+    curl_setopt($curl, CURLOPT_URL, $url);
+    $ret = curl_exec($curl);
+
+    curl_close($curl);
+
+    return $ret;
 }
 
-function s_http_file(&$ulr, &$file) {
-}
 
-////////////////////////////////////////////////////////////////////////////////
-//  $params = array(
-//      "file"      => array("image" => "/tmp/upload/tm001.png", "file" => $file),
-//      "cookie"    => array("SUE" => "ad2sadadaeadadasel;lkjj;", "SUP" => "asdhasdaesadas"),
-//      "header"    => array("SUE" => "ad2sadadaeadadasel;lkjj;", "SUP" => "asdhasdaesadas"),
-//  )
-//
-//
-function s_http(&$url, $method, &$params) {
+function s_http_get($url, &$params=false) {
     if (s_bad_string($url)
-        || s_bad_array($params)
+        || false === ( $response = s_http_response($url, $params, false) )
     ) {
         return false;
     }
 
-
-	$curl = curl_init();
-
-    $options = array(
-        CURLOPT_URL     => $url,
-
-    );
-
-    curl_setopt($curl, CURLOPT_URL, $url);
-    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8");
-
-    if ($method === "get") {
-        //GET请求
-        curl_setopt($curl , CURLOPT_GET, true);
-
-    } else {
-        //POST请求
-        curl_setopt($curl , CURLOPT_POST, true);
-
-        if (!s_bad_array($params["file"], $files)) {
-
-            curl_setopt($curl , CURLOPT_POSTFILEDS, $files);
-        }
-    }
-
-    if (!s_bad_array($params["cookie"], $cookie)) {
-        curl_setopt($curl , CURLOPT_COOKIE, s_http_encode($cookie));
-    }
-
-    if (s_bad_0array($params["header"], $header)) {
-        $header = array(
-        );
-    }
-
-    curl_setopt($curl, CURLOPT_USERAGENT, “Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8″);
-
-        curl_setopt($curl , CURLOPT_COOKIE, s_http_encode($cookie));
-
-    //区分是GET还是POST
+    return $repsonse;
 }
 
-    $file = array("upimg"=>"@E:/png.png");//文件路径，前面要加@，表明是文件上传.  
-    $curl = curl_init("http://localhost/a.php");  
-        curl_setopt($curl,CURLOPT_POST,true);  
-        curl_setopt($curl,CURLOPT_POSTFIELDS,$file);  
-            curl_exec($curl);  
+
+function s_http_post($url, &$params=false) {
+    if (s_bad_string($url)
+        || false === ( $response = s_http_response($url, $params, true) )
+    ) {
+        return false;
+    }
+
+    return $repsonse;
+}
+
+
+function s_http_json($url, &$params=false, $method=true) {
+    if (s_bad_string($utl)) {
+        return false;
+    }
+
+    $response = ( $method === true ? s_http_post($url, $params) : s_http_get($url, $params) );
+
+    return json_decode($repsonse, true);
+}

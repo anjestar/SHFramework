@@ -56,10 +56,10 @@ function &s_db_plink() {
 		'hostspec' => $_SERVER['SINASRV_DB4_HOST'],
 		'port'     => $_SERVER['SINASRV_DB4_PORT'],
 		'database' => $_SERVER['SINASRV_DB4_NAME'],
+//		'charset'  => 'utf8',
 	);
 
 	$db = MDB2::connect($dsn);
-	//$db->query("SET NAMES 'UTF8'");
 	if (MDB2::isError($db)) {
 		die($db->getMessage());
 	}
@@ -78,10 +78,10 @@ function &s_db_slink() {
 		'hostspec' => $_SERVER['SINASRV_DB4_HOST_R'],
 		'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
 		'database' => $_SERVER['SINASRV_DB4_NAME_R'],
+//		'charset'  => 'utf8',
 	);
 
 	$db = MDB2::connect($dsn);
-	//$db->query("SET NAMES 'utf8'");
 	if (MDB2::isError($db)) {
 		die($db->getMessage());
 	}
