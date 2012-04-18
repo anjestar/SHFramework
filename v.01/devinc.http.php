@@ -2,68 +2,48 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
 // devinc.http.php
-//	发送http请求的函数
+//	通过http请求获取数据的相关函数
 //
-//	s_bad_id($id)
-//	    判断数字是否正确（大于0）
+//	s_http_response($url, &$params, $method)
+//	    返回一个http response
 //  
-//	s_bad_0id($id)
-//	    判断数字是否正确（等于0也可以）
+//	s_http_get($url, &$params=false)
+//	    返回通过get获取的response对象
 //  
-//	s_bad_string($string)
-//	    判断字符串是否正确
+//	s_http_post($url, &$params=false)
+//	    返回通过post获取的response对象
 //
-//	s_bad_array($string, &$var)
-//	    判断数组否是正确，如果正确赋值给$var变量
-//
-//	s_bad_email($email, $var)
-//	    判断邮箱地址是否正确
+//	s_http_json($url, &$params=false, $method=true)
+//	    以jsonr对象返回数据
 //
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_request(&$url, &$params, $method) {
-    if(!is_numeric($id)
-        || ( $id = intval($id) ) <= 0
-    ) {
-        return true;
+function s_http_response($url, &$params, $method) {
+    if (s_bad_string($url)) {
+        return false;
     }
 
-    if ($var !== false) {
-        $var = $id;
+    if ($params === false) {
+        $params = array();
     }
 
-    return false;
-}
 
+    //post请求
+    $method = $method === true;
 
-function s_bad_0id(&$id, &$var=false) {
-    if(!is_numeric($id)
-        || ( $id = intval($id) ) < 0
-    ) {
-        return true;
+    if (isset($params["cookie"])) {
+        //有cookie
     }
 
-    if ($var !== false) {
-        $var = $id;
+    if (isset($params["file"])) {
+        //有文件要上传
     }
 
-    return false;
-}
-
-
-function s_bad_string(&$str, &$var=false) {
-    if (!is_string($str)
-        || $str !== strval($str)
-        || empty($str)
-    ) {
-        return true;
-    }
-
-    if ($var !== false) {
-        $var = strval($str);
+    if (isset($params["image"])) {
+        //有图片要上传
     }
 
 
@@ -71,43 +51,34 @@ function s_bad_string(&$str, &$var=false) {
 }
 
 
-function s_bad_0string(&$str, &$var=false) {
-    if (!is_string($str)
-        || $str !== strval($str)
+function s_http_get($url, &$params=false) {
+    if (s_bad_string($url)
+        || false === ( $response = s_http_response($url, $params, false) )
     ) {
-        return true;
+        return false;
     }
 
-    if ($var !== false) {
-        $var = $str;
-    }
-
-    return false;
-}
-
-function s_bad_array(&$arr, &$var=false) {
-    if (!is_array($arr)
-        || empty($arr)
-    ) {
-        return true;
-    }
-
-    if ($var !== false) {
-        $var = $arr;
-    }
-
-    return false;
+    return $repsonse;
 }
 
 
-function s_bad_email(&$email, &$var=false) {
-    if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-        return true;
+function s_http_post($url, &$params=false) {
+    if (s_bad_string($url)
+        || false === ( $response = s_http_response($url, $params, true) )
+    ) {
+        return false;
     }
 
-    if ($var !== false) {
-        $var = $email;
+    return $repsonse;
+}
+
+
+function s_http_json($url, &$params=false, $method=true) {
+    if (s_bad_string($utl)) {
+        return false;
     }
 
-    return false;
+    $response = ( $method === true ? s_http_post($url, $params) : s_http_get($url, $params) );
+
+    return json_decode($repsonse, true);
 }
