@@ -271,9 +271,8 @@ function _s_db_insert($table, &$data) {
     }
 
     if (isset($data["id"])) {
-        // 错误,插入的数据有主键
-
-        return s_log_arg();
+        //删除$data中的主键数据
+        unset($data["id"]);
     }
 
 
@@ -298,7 +297,7 @@ function _s_db_insert($table, &$data) {
 
     foreach (array_values($data) as $value) {
         if (is_string($value)) {
-            $arr[] = '"' . $value . '"';
+            $arr[] = '"' . s_string_safe($value) . '"';
 
         } else if (is_int($value)) {
             $arr[] = $value;
@@ -314,7 +313,7 @@ function _s_db_insert($table, &$data) {
 
         } else {
             //非法类型，转成字符串
-            $arr[] = '"' .  strval($value) . '"';
+            $arr[] = '"' .  s_string_safe(strval($value)) . '"';
         }
     }
 
@@ -325,15 +324,21 @@ function _s_db_insert($table, &$data) {
 }
 
 
-// 更新数据，其中$v1是原始数据，$v2是需更新的字段，其中不能包括主键
+// 更新数据，其中$v1是原始数据（包含主键字段id），$v2是需更新的字段，其中不能包括主键
 function _s_db_update($table, &$v1, &$v2) {
     if (s_bad_string($table)
         || s_bad_array($v1)
         || s_bad_array($v2)
-        || isset($v2["id"])
-        || !isset($v1["id"])
+
+        //没有指定主键，更新失败
+        || s_bad_id($v1["id"], $pid)
     ) {
-        return s_log_arg();
+        return s_log_arg("no primary key. ex: \$var\['id']");
+    }
+
+    if (isset($v2["id"])) {
+        //防止更新主键
+        unset($v2["id"]);
     }
 
     // 防止有重复的值
@@ -346,7 +351,7 @@ function _s_db_update($table, &$v1, &$v2) {
             continue;
         }
 
-        $values[] = "`{$key}`=" . ( is_string($value) ? '"' . $value . '"' : $value );
+        $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_string_safe($value) . '"' : $value );
     }
 
     $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
@@ -358,9 +363,9 @@ function _s_db_update($table, &$v1, &$v2) {
 
 
 function _s_db_delete($table, $v1) {
-    if (s_bad_string($table)
+    if (s_bad_string($table, $table, true)
         //是数组取主键值
-        || !( $v1 = is_array($v1) && isset($v1["id"]) ? intval($v1["id"]) : $v1 )
+        || !( $v1 = ( is_array($v1) && isset($v1["id"]) ) ? intval($v1["id"]) : $v1 )
         || s_bad_id($v1)
     ) {
         return s_log_arg();
