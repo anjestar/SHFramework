@@ -1,6 +1,6 @@
 <?php
 
-define("FRAMEWORK_DIR", __DIR__);
+define("FRAMEWORK_DIR", dirname(__DIR__));
 
 
 require_once(FRAMEWORK_DIR . "/devinc.bad.php");
