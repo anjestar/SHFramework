@@ -31,23 +31,68 @@ function s_http_response($url, &$params, $method) {
     }
 
 
-    //post请求
-    $method = $method === true;
+    $curl = curl_init();
+
+    curl_setopt($curl, CURLOPT_HEADER, 0);
+    curl_setopt($curl, CURLOPT_VERBOSE, 0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
 
     if (isset($params["cookie"])) {
         //有cookie
+        $arr = array();
+
+        foreach($params["cookei"] as $key => $value) {
+            $arr[] = $key . "=" . urlencode($value);
+        }
+
+        curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
+
+        unset($params["cookie"]);
     }
 
-    if (isset($params["file"])) {
+    if (isset($params["files"])) {
         //有文件要上传
+        curl_setopt($curl, CURLOPT_POST, 1);
+
+        foreach ($params["files"] as $value) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+        }
+
+        unset($params["file"]);
     }
 
     if (isset($params["image"])) {
         //有图片要上传
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params["image"]);
+
+        unset($params["image"]);
     }
 
+    $arr = array();
 
-    return false;
+    foreach ($params as $key => $value) {
+        $arr[] = $key . "=" . urlencode($value);
+    }
+
+    if ($method !== true) {
+        //GET
+        $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
+
+    } else {
+        //POST
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $arr));
+    }
+
+    //加载URL
+    curl_setopt($curl, CURLOPT_URL, $url);
+    $ret = curl_exec($curl);
+
+    curl_close($curl);
+
+    return $ret;
 }
 
 

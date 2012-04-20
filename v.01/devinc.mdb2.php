@@ -1,22 +1,54 @@
 <?php
-/*********************************************************
- * DB extends class
- * connect to primary database & slave database
- *
- * Jory <jorygong@gmail.com>
- * 2006-4-20
- *
- *
- * modify @: 2012-03-30   by Duanyong: coderduan@gmail.com
- *
- *
-**********************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+// devinc.mbd2.php
+//	将mdb2的操作封装起来。此文件实现了读写分离操作，调用者不用关心主从数据库。
+//
+//
+//	s_db_plink()
+//	    返回主数据库链接（写操作）
+//  
+//	s_db_slink()
+//	    返回从数据库链接（读操作）
+//  
+//	s_db_close($db)
+//	    关闭数据库链接
+//
+//	s_db_list($sql)
+//      返回列表数据（不从memcache缓存中获取数据）
+//
+//  s_db_row($sql)
+//      返回某行数据（不从memcache缓存中获取数据）
+//
+//  s_db_one($sql)
+//      返回某个字段值（不从memcache缓存中获取数据）
+//
+//  s_db_exec($sql)
+//      执行sql语句（update或insert）
+//
+//  s_db($action, $v1, $v2)
+//      对数据操作（最常用语句），如有APP_DB_PREFIX常量，自动添加到表名前
+//      1、插入数据
+//          s_db("user:insert", array("uid" => 1, "name" => "duanyong"))
+//
+//      2、更新数据
+//          s_db("user:update", array("id" => 1), array("uid" => 1, "name" => "duanyong"))
+//
+//      3、删除数据 XXX 慎用：除非表结构中status字段且可取负值 XXX
+//          s_db("user:delete", array("id" => 1))   //数组参数，指定表主键与值
+//          s_db("user:delete", 1)                  //数字参数，自动对应表主键
+//
+//  s_db_primary($sql, $id)
+//      返回表主键对应的数据
+//
+//
+////////////////////////////////////////////////////////////////////////////////
 
 require_once('MDB2.php');
 
-//Connecting primary database;
-function &s_db_plink()
-{
+
+//主数据的链接（写操作）
+function &s_db_plink() {
 	$dsn = array(
 		'phptype'  => "mysql",
 		'username' => $_SERVER['SINASRV_DB4_USER'],
@@ -24,20 +56,21 @@ function &s_db_plink()
 		'hostspec' => $_SERVER['SINASRV_DB4_HOST'],
 		'port'     => $_SERVER['SINASRV_DB4_PORT'],
 		'database' => $_SERVER['SINASRV_DB4_NAME'],
+//		'charset'  => 'utf8',
 	);
+
 	$db = MDB2::connect($dsn);
-//	$db->query("SET NAMES 'utf8'");
-	if(MDB2::isError($db))
-	{
+	if (MDB2::isError($db)) {
 		die($db->getMessage());
 	}
+
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+
 	return $db;
 }
 
-//Connecting slave database;
-function &s_db_slink()
-{
+//从数据库的链接（读操作）
+function &s_db_slink() {
 	$dsn = array(
 		'phptype'  => "mysql",
 		'username' => $_SERVER['SINASRV_DB4_USER_R'],
@@ -45,20 +78,21 @@ function &s_db_slink()
 		'hostspec' => $_SERVER['SINASRV_DB4_HOST_R'],
 		'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
 		'database' => $_SERVER['SINASRV_DB4_NAME_R'],
+//		'charset'  => 'utf8',
 	);
 
 	$db = MDB2::connect($dsn);
-//	$db->query("SET NAMES 'utf8'");
 	if (MDB2::isError($db)) {
 		die($db->getMessage());
 	}
 
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+
 	return $db;
 }
 
 //Disconnecting a database
-function s_db_close(&$dbh) {
+function &s_db_close(&$dbh) {
 	if (is_object($dbh)) {
         try {
             $dbh->disconnect();
@@ -78,7 +112,7 @@ function s_db_list($sql) {
         return false;
     }
 
-    $list = $db-queryAll($sql);
+    $list = $db->queryAll($sql);
     s_db_close($db);
 
     return PEAR::isError($list) ? false : $list;
@@ -93,7 +127,7 @@ function s_db_row($sql) {
         return false;
     }
 
-    $row = $db-queryRow($sql);
+    $row = $db->queryRow($sql);
     s_db_close($db);
 
     return PEAR::isError($row) ? false : $row;
@@ -108,7 +142,7 @@ function s_db_one($sql) {
         return false;
     }
 
-    $one = $db-queryOne($sql);
+    $one = $db->queryOne($sql);
     s_db_close($db);
 
     return PEAR::isError($one) ? false : $one;
@@ -132,7 +166,7 @@ function s_db_exec($sql) {
 
     //是否执行成功
     if ($ret !== false
-        && "update" === substr($sql, 0, strpos(" ", $sql))
+        && "insert" === substr($sql, 0, strpos(" ", $sql))
     ) {
         //插入成功，返回记录的主键
         $ret = $db->lastInsertID();
@@ -175,9 +209,9 @@ function s_db($table, &$v1, &$v2=false) {
 
     ////////////////////////////////////////////////////////////////////////////////
     // s_db("user", uid)
-    // s_db("user:insert", array("uid" => 1, "name" => "张三"))
-    // s_db("user:update", array("uid" => 1, "name" => "张三"), array("name" => "duanyong"))
-    // s_db("user:delete", uid)
+    // s_db("user:insert", array("id" => 1, "name" => "张三"))
+    // s_db("user:update", array("id" => 1, "name" => "张三"), array("name" => "duanyong"))
+    // s_db("user:delete", id)
 
     // 对table分拆，得出表名和需要操作的类型
     $pos    = strrpos($table, ":");
@@ -188,7 +222,6 @@ function s_db($table, &$v1, &$v2=false) {
 
     if ($action === false) {
         // 按主键返回数据
-
         if (s_bad_id($v1)) {
             return s_log_arg();
         }
@@ -197,14 +230,15 @@ function s_db($table, &$v1, &$v2=false) {
 
     } else if ($action === "insert") {
         // 插入数据
-        $ret = s_db_insert($table, $v1, $v2);
+        $ret = _s_db_insert($table, $v1);
 
     } else if ($action === "update") {
         // 更新
-        $ret = s_db_update($table, $v1, $v2);
+        $ret = _s_db_update($table, $v1, $v2);
 
     } else if ($action === "delete") {
         // 删除
+        $ret = _s_db_delete($table, $v1);
     }
 
 
@@ -221,36 +255,22 @@ function s_db_primary($table, $id) {
         return s_log_arg();
     }
 
-    $pid = substr($table, 0, 1) . "id";
-    $sql = "select * from {$table} where {$pid} = {$id}";
+    $prefix = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
+    $sql    = "select * from {$prefix}{$table} where `id`= {$id}";
 
-    //从从库中查询
-
-    // 得到一个资源连接后取得对应的数据
-    if ( false === ( $reader = a_db_reader($sql) )
-        || false === ( $row = mysql_fetch_row($reader) )
-    ) {
-        return s_log_arg();
-    }
-
-    // 释放资源
-    mysql_free_result($reader);
-
-    return $row;
+    return s_db_row($sql);
 }
 
 
 // 插入数据到数据库。其中$data已经包含了对应的主键
-function s_db_insert($table, &$data) {
+function _s_db_insert($table, &$data) {
     if (s_bad_string($table)
         || s_bad_array($data)
     ) {
         return s_log_arg();
     }
 
-    $pid = substr($table, 0, 1) . "id";
-
-    if (isset($data[$pid])) {
+    if (isset($data["id"])) {
         // 错误,插入的数据有主键
 
         return s_log_arg();
@@ -259,10 +279,11 @@ function s_db_insert($table, &$data) {
 
     // 除去重复的值
     $data = array_unique($data);
+    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
 
     // 将$data中的字段折出来(`name`, `age`, `sex`, `account`)
     $arr = array();
-    $sql = "insert into `{$table}`";
+    $sql = "insert into `{$prev}{$table}`";
 
     foreach (array_keys($data) as $key) {
         $arr[] = $key;
@@ -300,53 +321,26 @@ function s_db_insert($table, &$data) {
     // ('zhangsan', 22, true, 99)
     $sql .= ' value (' . implode(', ', $arr) . ')';
 
-
-    if(false === a_db_reader($sql)
-        || false === ($id = mysql_insert_id() )
-    ) {
-        // 插入失败
-
-        return a_log_sql(mysql_error());
-    }
-
-    return $data[$pid] = $id;
+    return s_db_exec($sql);
 }
 
 
 // 更新数据，其中$v1是原始数据，$v2是需更新的字段，其中不能包括主键
-function s_db_update($table, &$v1, &$v2) {
+function _s_db_update($table, &$v1, &$v2) {
     if (s_bad_string($table)
         || s_bad_array($v1)
         || s_bad_array($v2)
+        || isset($v2["id"])
+        || !isset($v1["id"])
     ) {
         return s_log_arg();
     }
-
-    // 分析$table，得到表主键
-    $pid    = "";
-    $names  = explode("_", $table);
-    foreach ($names as $key) {
-        if (s_bad_string($key)) {
-            continue;
-        }
-
-        // 把每个单词的首字母拼凑起来组合成主键
-        $pid .= substr($key, 0, 1);
-    }
-
-    if (empty($pid)) {
-        return s_log_arg();
-    }
-
-    $pid .= "id";
-
-
-    $values = array();
 
     // 防止有重复的值
     $v2 = array_unique($v2);
 
     // 对$v1和$v2数据归类
+    $values = array();
     foreach ($v2 as $key => $value) {
         if ($v1[$key] == $v2[$key]) {
             continue;
@@ -355,89 +349,26 @@ function s_db_update($table, &$v1, &$v2) {
         $values[] = "`{$key}`=" . ( is_string($value) ? '"' . $value . '"' : $value );
     }
 
-    ///TODo!!!!!!
+    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
+    $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`= {$v1[$pid]}";
 
-    $sql = "update `{$table}` set " . implode(", ", $values) . " where {$pid} = {$v1[$pid]}";
+    return s_db_exec($sql);
+}
 
-    if (false === a_db_reader($sql)) {
+
+
+function _s_db_delete($table, $v1) {
+    if (s_bad_string($table)
+        //是数组取主键值
+        || !( $v1 = is_array($v1) && isset($v1["id"]) ? intval($v1["id"]) : $v1 )
+        || s_bad_id($v1)
+    ) {
         return s_log_arg();
     }
 
-    return s_db_primary($table, $v1[$pid]);
+
+    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
+    $sql  = "update `{$prev}{$table}` set `status`=-1 where `id`= {$v1}";
+
+    return s_db_exec($sql);
 }
-
-
-// 把数据按列表返回
-function a_db_query($sql) {
-    if (s_bad_string($sql)) {
-        return s_log_arg();
-    }
-
-    if ( false === ( $reader = a_db_reader($sql) )) {
-        return a_log_sql(mysql_error());
-    }
-
-
-    // 得到资源后，取得对应的数据
-    $rows = array();
-    while ($row = mysql_fetch_assoc($reader)) {
-        $rows[] = $row;
-    }
-
-    // 释放资源文件
-    mysql_free_result($reader);
-
-
-    //只返回一条数据时
-    if (strripos($sql, "limit 1;") !== false
-        && count($rows) === 1
-    ) {
-        return current($rows);
-    }
-
-    return $rows;
-}
-
-
-// 执行sql语句
-function a_db_reader($sql) {
-    if (s_bad_string($sql)) {
-        return s_log_arg();
-    }
-
-    global $config;
-
-    if (!isset($config["username"])
-        || !isset($config["password"])
-    ) {
-        return a_log_sql("database need set username and password for mysql connection.");
-    }
-
-    if (!isset($config["farm"])
-        || empty($config["farm"])
-    ) {
-        return a_log_sql("database need know ip mysql connection.");
-    }
-
-
-
-    $farm = $config["farm"];
-
-    if (false === ( $conn = mysql_pconnect($farm[0], $config["username"], $config["password"]) )
-        || false === mysql_select_db($config["database"], $conn)
-        || false === mysql_query("SET NAMES 'UTF8'", $conn)
-        || false === ( $reader = mysql_query($sql, $conn) )
-    ) {
-        return a_log_sql(mysql_error());
-    }
-
-    a_log($sql, E_USER_NOTICE);
-
-    return $reader;
-}
-
-
-function a_db_desc($name) {
-    return a_db_query("SHOW COLUMNS FROM `" . $name . "`;");
-}
-
