@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params, $method) {
+function s_http_response($url, &$params=false, $method=true) {
     if (s_bad_string($url)) {
         return false;
     }
@@ -36,13 +36,16 @@ function s_http_response($url, &$params, $method) {
     curl_setopt($curl, CURLOPT_HEADER, 0);
     curl_setopt($curl, CURLOPT_VERBOSE, 0);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+
+    if (isset($_SERVER['HTTP_USER_AGENT'])) {
+        curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+    }
 
     if (isset($params["cookie"])) {
         //有cookie
         $arr = array();
 
-        foreach($params["cookei"] as $key => $value) {
+        foreach($params["cookie"] as $key => $value) {
             $arr[] = $key . "=" . urlencode($value);
         }
 
