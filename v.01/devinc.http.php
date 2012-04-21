@@ -51,25 +51,21 @@ function s_http_response($url, &$params, $method) {
         unset($params["cookie"]);
     }
 
-    if (isset($params["files"])) {
+    if (isset($params["file"])) {
         //有文件要上传
         curl_setopt($curl, CURLOPT_POST, 1);
 
-        foreach ($params["files"] as $value) {
+        foreach ($params["file"] as &$value) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+
+            unset($value);
         }
 
         unset($params["file"]);
     }
 
-    if (isset($params["image"])) {
-        //有图片要上传
-        curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params["image"]);
 
-        unset($params["image"]);
-    }
-
+    //将余下的post字段添加到http请求中
     $arr = array();
 
     foreach ($params as $key => $value) {

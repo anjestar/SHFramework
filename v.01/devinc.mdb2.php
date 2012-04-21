@@ -50,12 +50,12 @@ require_once('MDB2.php');
 //主数据的链接（写操作）
 function &s_db_plink() {
 	$dsn = array(
-		'phptype'  => "mysql",
-		'username' => $_SERVER['SINASRV_DB4_USER'],
-		'password' => $_SERVER['SINASRV_DB4_PASS'],
-		'hostspec' => $_SERVER['SINASRV_DB4_HOST'],
-		'port'     => $_SERVER['SINASRV_DB4_PORT'],
-		'database' => $_SERVER['SINASRV_DB4_NAME'],
+        'phptype'  => "mysql",
+        'username' => $_SERVER['SINASRV_DB4_USER'],
+        'password' => $_SERVER['SINASRV_DB4_PASS'],
+        'hostspec' => $_SERVER['SINASRV_DB4_HOST'],
+        'port'     => $_SERVER['SINASRV_DB4_PORT'],
+        'database' => $_SERVER['SINASRV_DB4_NAME'],
 //		'charset'  => 'utf8',
 	);
 
@@ -72,23 +72,23 @@ function &s_db_plink() {
 //从数据库的链接（读操作）
 function &s_db_slink() {
 	$dsn = array(
-		'phptype'  => "mysql",
-		'username' => $_SERVER['SINASRV_DB4_USER_R'],
-		'password' => $_SERVER['SINASRV_DB4_PASS_R'],
-		'hostspec' => $_SERVER['SINASRV_DB4_HOST_R'],
-		'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
-		'database' => $_SERVER['SINASRV_DB4_NAME_R'],
+        'phptype'  => "mysql",
+        'username' => $_SERVER['SINASRV_DB4_USER_R'],
+        'password' => $_SERVER['SINASRV_DB4_PASS_R'],
+        'hostspec' => $_SERVER['SINASRV_DB4_HOST_R'],
+        'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
+        'database' => $_SERVER['SINASRV_DB4_NAME_R'],
 //		'charset'  => 'utf8',
-	);
+);
 
 	$db = MDB2::connect($dsn);
-	if (MDB2::isError($db)) {
-		die($db->getMessage());
-	}
+    if (MDB2::isError($db)) {
+        die($db->getMessage());
+    }
 
-	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
+    $db->setFetchMode(MDB2_FETCHMODE_ASSOC);
 
-	return $db;
+    return $db;
 }
 
 //Disconnecting a database
@@ -100,7 +100,7 @@ function &s_db_close(&$dbh) {
         }
 	}
 
-    $dbh = null;
+    unset($dbh);
 }
 
 
