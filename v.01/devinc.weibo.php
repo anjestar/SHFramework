@@ -47,24 +47,17 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
     }
 
     //看cache中是否存在
-    $mem = s_memcache_share();
-    $key = md5(MEM_CACHE_KEY_PREFIX."_weibo_list_" . $uid . $page. $count);
+    $key = "weibo_list_by_uid#" . $uid . $page. $count;
 
-    if (( $data = $mem->get($key) )) {
-        //缓存中已经存在
-        $data = json_decode($data, true);
-    }
-
-    if (!$data) {
+    if (false === ( $data = s_memcache($key) )) {
         //缓存中没有，请求服务器
         $params = array(
             "user_id"   => $uid,
-            "source"    => APP_KEY,
             "count"     => $count,
             "page"      => $page,
         );
 
-        if (false === ( $data = s_http_get('http://api.t.sina.com.cn/statuses/user_timeline.json', $params) )) {
+        if (false === ( $data = s_weibo_http('http://api.t.sina.com.cn/statuses/user_timeline.json', $params) )) {
             return false;
         }
        

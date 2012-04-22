@@ -126,7 +126,7 @@ function s_bad_key(&$obj, &$key, &$var=false) {
         return !isset($obj[$key]);
     }
 
-    if (isset($obj[$key]) {
+    if (isset($obj[$key])) {
         $var = $obj[$key];
     }
 

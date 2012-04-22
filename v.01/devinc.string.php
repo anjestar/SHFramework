@@ -26,7 +26,7 @@ function s_string_length($string, $trim=false) {
     $len1 = strlen($string);
     $len2 = mb_strlen($string);
 
-    return $len1 === $len2 ? $len1 ? $len2;
+    return $len1 === $len2 ? $len1 : $len2;
 }
 
 

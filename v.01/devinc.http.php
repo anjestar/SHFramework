@@ -75,7 +75,7 @@ function s_http_response($url, &$params=false, $method=true) {
         $arr[] = $key . "=" . urlencode($value);
     }
 
-    if ($method !== true) {
+    if ($method === "get") {
         //GET
         $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
 
@@ -97,7 +97,7 @@ function s_http_response($url, &$params=false, $method=true) {
 
 function s_http_get($url, &$params=false) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, false) )
+        || false === ( $response = s_http_response($url, $params, "get") )
     ) {
         return false;
     }
@@ -108,7 +108,7 @@ function s_http_get($url, &$params=false) {
 
 function s_http_post($url, &$params=false) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, true) )
+        || false === ( $response = s_http_response($url, $params, "post") )
     ) {
         return false;
     }
@@ -117,12 +117,12 @@ function s_http_post($url, &$params=false) {
 }
 
 
-function s_http_json($url, &$params=false, $method=true) {
-    if (s_bad_string($utl)) {
+function s_http_json($url, &$params=false, $method="get") {
+    if (s_bad_string($url)) {
         return false;
     }
 
-    $response = ( $method === true ? s_http_post($url, $params) : s_http_get($url, $params) );
+    $response = s_http_response($url, $params, $method);
 
-    return json_decode($repsonse, true);
+    return json_decode($response, true);
 }

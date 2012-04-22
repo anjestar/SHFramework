@@ -24,12 +24,12 @@ function s_user_by_uid($uid) {
         return false;
     }
 
-	$key = "user_by_uid#" . $uid);
+	$key = "user_by_uid#" . $uid;
     $arr = array(
         "uid"   => $uid,
     );
 
-    if (false === ( $user = s_memcache_get($key) )
+    if (false === ( $user = s_memcache($key) )
         || false === ( $user = s_weibo_http("", $arr) )
     ) {
         return false;
@@ -46,7 +46,7 @@ function s_user_by_nickname($nickname) {
         return false;
     }
 
-    $key = "user_by_nickname#" . $nickname
+    $key = "user_by_nickname#" . $nickname;
 
     if (false === ( $uid = s_memcache_get($key) )) {
         //缓存中不存在，从API获取uid缓存起来
@@ -72,7 +72,7 @@ function s_user_by_domain($domain) {
     $params = array("domain" => $domain);
 
     if (false === ( $data = s_memcache_get($key) )
-        false === ( $user = s_weibo_http("/users/domain_show.json", $params) )
+        || false === ( $user = s_weibo_http("/users/domain_show.json", $params) )
     ) {
         //缓存中不存在
         return false;
@@ -128,17 +128,17 @@ function s_users_by_uids(&$uids, $encoded=false) {
             }
 
             $params = array(
-                "uids"   = implode(",", $ids),
-                "source" = APP_KEY,
-                "cookie" = array(
+                "uids"   => implode(",", $ids),
+                "source" => APP_KEY,
+                "cookie" => array(
                     "SUE"   => $_COOKIE["SUE"],
                     "SUP"   => $_COOKIE["SUP"],
                 ),
             );
 
-            $data = s_http_get()
+            $data = s_http_get();
 
-            $req =& new HTTP_Request('http://i2.api.weibo.com/2/users/show_batch.json');    
+            $req = &new HTTP_Request('http://i2.api.weibo.com/2/users/show_batch.json');
             $req->setMethod(HTTP_REQUEST_METHOD_GET);	
             $req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));
             $req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));
