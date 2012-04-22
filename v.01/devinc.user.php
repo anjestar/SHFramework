@@ -118,209 +118,99 @@ function s_user_by_domain($domain) {
 //获取用户的微博列表，超过200条返回false
 function s_weibo_list_by_uid($uid, $page=1, $count=20) {
     if (s_bad_id($uid)
-        || ( $mem = s_memcache_global() ) === false
+        || s_bad_id($page)
+        || s_bad_id($count)
+
+        || $count > 200
     ) {
-        return false;
-    }
-
-    if (s_bad_id($page)) {
-        //默认第一页
-        $page = 1;
-    }
-
-    if (s_bad_id($count)) {
-        //默认20条
-        $count = 20;
-    }
-
-    if ($count > 200) {
-        //超过200不能获取
         return false;
     }
 
 
     //看cache中是否存在
-	$key = md5(MEM_CACHE_KEY_PREFIX . "_weibo_list_" . $uid . $page. $count);
+    $key = "weibo_list_by_uid_page_count#{$uid}_{$page}_{$count}";
 
-    if (false === ( $data = $mem->get($key) )) {
-        //缓存中不存在，从API获取微博列表缓存起来
-        $list = s_http_request();
-    }
+    if (false === ( $data = s_memcache($key) )) {
+        $params = array(
+            "user_id"   => $uid,
+            "count"     => $count,
+            "page"      => $page,
+        );
 
-    if (!$data) {
-        //缓存中没有，请求服务器
-        //参考：http://open.weibo.com/wiki/2/statuses/user_timeline
-        $req =& new HTTP_Request('/statuses/user_timeline.json'); 
-        $req->setMethod(HTTP_REQUEST_METHOD_GET);
-        $req->addQueryString('user_id', $uid);	
-        $req->addQueryString('source', MBLOG_APP_KEY); 
-        $req->addQueryString('count',$count); 
-        $req->addQueryString('page', $page); 
-        $rs = $req->sendRequest();
-
-        if (PEAR::isError($rs)
-            || false === ( $data = $req->getResponseBody() )
-            || false === ( $data = json_decode($data, true) )
-            || isset($data["error"])
-            || isset($data["error_code"])
-        ) {
+        if (false === ( $data = s_weibo_http("http://api.t.sina.com.cn/statuses/update.json", $params) ) {
             return false;
         }
-       
-        //缓存起来900秒（15分钟）
-		$mem->set($key, json_encode($data), 0, 900);
+
+        //存储到缓存中
     }
 
     return $data;
 }
 
 
-function get_weibo_list_by_uid($uid, $page=1, $count=20) {
-    if (( $uid = intval($uid) ) <= 0) {
-        return false;
+//用户发微博
+function s_user_post_weibo($weibo) {
+    if (is_string($weibo)) {
+        $weibo = array(
+            "status" => $weibo,
+        );
     }
 
-    if (( $page = intval($page) ) <= 0) {
-        //默认第一页
-        $page = 1;
-    }
-
-    if (( $count = intval($count) ) <= 0) {
-        //默认20条
-        $count = 20;
-
-    } else if ($count > 200) {
+    if (s_bad_string($weibo["status"], $text)) {
         return false;
     }
 
 
-    //看cache中是否存在
-	$mem = mem_cache_share();
-	$key = md5(MEM_CACHE_KEY_PREFIX."_weibo_list_" . $uid . $page. $count);
+    $weibo["status"] = urlencode($text);
 
-    if (( $data = $mem->get($key) )) {
-        //缓存中已经存在
-		$data = json_decode($data, true);
-    }
-
-    if (!$data) {
-        //缓存中没有，请求服务器
-        $req =& new HTTP_Request('http://api.t.sina.com.cn/statuses/user_timeline.json'); 
-        $req->setMethod(HTTP_REQUEST_METHOD_GET);
-        $req->addQueryString('user_id', $uid);	
-        $req->addQueryString('source', MBLOG_APP_KEY); 
-        $req->addQueryString('count',$count); 
-        $req->addQueryString('page', $page); 
-        $rs = $req->sendRequest();
-
-        if (PEAR::isError($rs)
-            || false === ( $data = $req->getResponseBody() )
-            || false === ( $data = json_decode($data, true) )
-            || isset($data["error"])
-            || isset($data["error_code"])
-        ) {
-            return false;
-        }
-       
-        //缓存起来900秒（15分钟）
-		$mem->set($key, json_encode($data), 0, 900);
-    }
-
-    return $data;
-}
-
-function send_to_my_wblog($content) {
-	$req =& new HTTP_Request('http://api.t.sina.com.cn/statuses/update.json');    			
-	$req->setMethod(HTTP_REQUEST_METHOD_POST);
-	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
-	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
-	$req->addPostData('status', URLEncode($content));	
-	$req->addPostData('source',MBLOG_APP_KEY);
-	$rs = $req->sendRequest();
-    if (PEAR::isError($rs)
-        || false === ( $data = json_decode($req->getResponseBody(), true) )
-        || isset($data["erro"])
-    ) {
-        return false;
-	}
-
-    return $data;
-}
-
-function repost_twblog($content, $mid) {
-	$req =& new HTTP_Request('https://api.weibo.com/2/statuses/repost.json');    				
-	$req->setMethod(HTTP_REQUEST_METHOD_POST);
-	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
-	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
-	//$req->addPostData('status', URLEncode($content));
-	$req->addPostData('status', $content);	
-	$req->addPostData('source',MBLOG_APP_KEY);
-	$req->addPostData('id',$mid);
-	$rs = $req->sendRequest();
-	if (!PEAR::isError($rs))
-	{
-		$data= $req->getResponseBody();
-	}
-	return json_decode($data, true);
-}
-
-function comments_twblog($content, $mid) {
-	$req =& new HTTP_Request('https://api.weibo.com/2/comments/create.json');    				
-	$req->setMethod(HTTP_REQUEST_METHOD_POST);
-	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
-	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
-	//$req->addPostData('comment', URLEncode($content));	
-	$req->addPostData('comment', $content);	
-	$req->addPostData('source',MBLOG_APP_KEY);
-	$req->addPostData('id',$mid);
-	$rs = $req->sendRequest();
-	if (!PEAR::isError($rs))
-	{
-		$data= $req->getResponseBody();
-	}
-	return json_decode($data, true);
+    return s_weibo_http('http://api.t.sina.com.cn/statuses/update.json', $weibo, 'post');
 }
 
 
-//允许20以内的长url换算成t.cn
-function weibo_turl($urls) {
-    if (is_string($urls)) {
-        $urls = array($urls);
-    }
-
-    if (!is_array($urls)
-        || empty($urls)
-        || count($urls) > 20
+//用户回复微博
+function s_user_repost_weibo($weibo) {
+    if (s_bad_id($weibo["id"])
+        || s_bad_string($weibo["status"])
     ) {
         return false;
     }
 
-    $req =& new HTTP_Request('http://api.t.sina.com.cn/short_url/shorten.json');    				
-	$req->setMethod(HTTP_REQUEST_METHOD_GET);
-	$req->addCookie("SUE", URLEncode($_COOKIE["SUE"]));
-	$req->addCookie("SUP", URLEncode($_COOKIE["SUP"]));
-	$req->addQueryString('source', MBLOG_APP_KEY);
-
-    foreach ($urls as $item) {
-        $req->addQueryString('url_long', $item);
-    }
-
-
-	if (PEAR::isError($req->sendRequest())
-        || false === ( $data = $req->getResponseBody() )
-        || false === ( $data = json_decode($data, true) )
-        || isset($data["error"])
-        || isset($data["error_code"])
-    ) {
-        return false;
-	}
-
-    return count($data) === 1 && isset($data[0]["url_short"]) ? $data[0]["url_short"] : $data;
+    return s_weibo_http('https://api.weibo.com/2/statuses/repost.json', $weibo, 'post');
 }
 
 
-function check_user()
-{
+//用户转发微博
+function s_user_forward_weibo($weibo) {
+    if (s_bad_id($weibo["id"])
+        || s_bad_string($weibo["comment"])
+    ) {
+        return false;
+    }
+
+    return s_weibo_http('https://api.weibo.com/2/comments/create.json', $weibo, 'post');
+}
+
+//用户好友搜索
+function s_user_search($name, $count=10, $page=1) {
+    if (s_bad_string($name)
+        || s_bad_id($page)
+        || s_bad_id($count)
+    ) {
+        return false;
+    }
+
+    $params = array(
+        'q'     => $name,
+        'page'  => $page,
+        'count' => $count,
+    );
+
+    //区分精确搜索还是模糊搜索
+	return s_weibo_http('http://api.t.sina.com.cn/users/search.json', $params);    
+}
+
+
+function s_check_user() {
 	$req =& new HTTP_Request('http://api.t.sina.com.cn/account/verify_credentials.json');    
 	$req->setMethod(HTTP_REQUEST_METHOD_GET);
 	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
@@ -333,30 +223,6 @@ function check_user()
 	}
 	return json_decode($data);
 }
-
-function user_search($name, $count=10, $page=1) {
-	$req =& new HTTP_Request('http://api.t.sina.com.cn/users/search.json');    
-	$req->setMethod(HTTP_REQUEST_METHOD_GET);
-	$req->addQueryString('q', $name);
-	$req->addQueryString('page', $page);
-	$req->addQueryString('count', $count);
-	$req->addQueryString('source', MBLOG_APP_KEY);  
-	$rs = $req->sendRequest();
-
-	if (PEAR::isError($rs)) {
-        return false;
-    }
-
-    if (false === ( $data = json_decode($req->getResponseBody(), true) )
-        || isset($data["error"])
-        || isset($data["error_code"])
-    ) {
-        return false;
-    }
-
-    return $data;
-}
-
 
 
 function get_fans($json,$arr) {
@@ -484,7 +350,7 @@ function get_users_by_uids(&$uids, $encoded=false) {
 
 
 //返回互粉列表，只返回ID数组，并没有用户数据
-function get_user_firends_ids_by_uid($uid, $page=1, $count=50) {
+function s_user_firends_ids_by_uid($uid, $page=1, $count=50) {
     if (( $uid = intval($uid) ) <= 0) {
         return false;
     }
