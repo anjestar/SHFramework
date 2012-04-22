@@ -14,13 +14,14 @@
 
 //返回分页对象
 function get_pagebar_detail($current, $total, $count=20, $gap=5) {
-    if (!is_int($current)) {
-        $current = 1;
+    if (s_bad_id($current, $cuttent)
+        || s_bad_id($total, $total)
+        || s_bad_id($count, $count)
+        || s_bad_id($gap, $gap)
+    ) {
+        return false;
     }
 
-    if (!is_int($gap)) {
-        $gap = 5;
-    }
 
     $diff   = floor($gap / 2);
     $max    = ceil($total / $count);
