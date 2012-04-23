@@ -49,12 +49,24 @@ function s_string_safe($string, $trim=false) {
 
 //将字符串创建成目录
 function s_string_2dir($path, $mask=0755) {
-    if (s_bad_string($path)
-        || s_bad_id($mask)
+    if (s_bad_string($path)) {
+        return false;
+    }
+
+    if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
+        $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
+    }
+
+    if (!is_dir($real)
+        && !mkdir($real, $mask, true)
     ) {
         return false;
     }
 
-
-    return is_dir($path) ? true : mkdir($path, $mask, true);
+    return array(
+        // /data1/www/cache/all.vic.sina.com.cn/
+        // http://all.vic.sina.com.cn/cache
+        "url" => $_SERVER["SINASRV_CACHE_URL"] . "/" . $path,
+        "dir" => $_SERVER["SINASRV_CACHE_DIR"] . $path,
+    );
 }

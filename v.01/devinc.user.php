@@ -138,7 +138,7 @@ function s_users_by_uids(&$uids, $encoded=false) {
 
             $data = s_http_get();
 
-            $req = &new HTTP_Request('http://i2.api.weibo.com/2/users/show_batch.json');
+            $req = new HTTP_Request('http://i2.api.weibo.com/2/users/show_batch.json');
             $req->setMethod(HTTP_REQUEST_METHOD_GET);	
             $req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));
             $req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));
@@ -234,7 +234,7 @@ function s_user_post_weibo($uid, $weibo) {
     if (!$data) {
         //缓存中没有，请求服务器
         //参考：http://open.weibo.com/wiki/2/statuses/user_timeline
-        $req =& new HTTP_Request('/statuses/user_timeline.json'); 
+        $req = new HTTP_Request('/statuses/user_timeline.json'); 
         $req->setMethod(HTTP_REQUEST_METHOD_GET);
         $req->addQueryString('user_id', $uid);	
         $req->addQueryString('source', MBLOG_APP_KEY); 
@@ -259,7 +259,7 @@ function s_user_post_weibo($uid, $weibo) {
 }
 
 function s_send_to_my_wblog($content) {
-	$req =& new HTTP_Request('http://api.t.sina.com.cn/statuses/update.json');    			
+	$req = new HTTP_Request('http://api.t.sina.com.cn/statuses/update.json');    			
 	$req->setMethod(HTTP_REQUEST_METHOD_POST);
 	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
 	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
@@ -277,7 +277,7 @@ function s_send_to_my_wblog($content) {
 }
 
 function s_repost_twblog($content, $mid) {
-	$req =& new HTTP_Request('https://api.weibo.com/2/statuses/repost.json');    				
+	$req = new HTTP_Request('https://api.weibo.com/2/statuses/repost.json');    				
 	$req->setMethod(HTTP_REQUEST_METHOD_POST);
 	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
 	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
