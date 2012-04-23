@@ -25,14 +25,17 @@ function s_user_by_uid($uid) {
     }
 
 	$key = "user_by_uid#" . $uid;
-    $arr = array(
-        "uid"   => $uid,
-    );
 
-    if (false === ( $user = s_memcache($key) )
-        || false === ( $user = s_weibo_http("", $arr) )
-    ) {
-        return false;
+    if (false === ( $user = s_memcache($key) )) {
+        $arr = array(
+            "uid"   => $uid,
+        );
+
+        if (false === ( $user = s_weibo_http("https://api.weibo.com/2/users/show.json", $arr) )) {
+            return false;
+        }
+
+        //存储memcache中
     }
 
 	return $user;
@@ -200,95 +203,46 @@ function s_users_by_uids(&$uids, $encoded=false) {
 
 
 //用户发布徽博
-function s_user_post_weibo($uid, $weibo) {
-    if (s_bad_id($uid)
-        || ( $mem = s_memcache_global() ) === false
+function s_user_post_weibo($weibo) {
+    if (s_bad_array($weibo)
+        || s_bad_string($weibo["status"])
     ) {
         return false;
     }
 
-    if (s_bad_id($page)) {
-        //默认第一页
-        $page = 1;
+    if (isset($weibo["pic"])) {
+        //发图片微博
+        $url = "https://api.weibo.com/2/statuses/upload.json";
+
+    } else {
+        //发文字微博
+        $url = "https://api.weibo.com/2/statuses/update.json";
     }
 
-    if (s_bad_id($count)) {
-        //默认20条
-        $count = 20;
-    }
-
-    if ($count > 200) {
-        //超过200不能获取
-        return false;
-    }
-
-
-    //看cache中是否存在
-	$key = md5(MEM_CACHE_KEY_PREFIX . "_weibo_list_" . $uid . $page. $count);
-
-    if (false === ( $data = $mem->get($key) )) {
-        //缓存中不存在，从API获取微博列表缓存起来
-        $list = s_http_request();
-    }
-
-    if (!$data) {
-        //缓存中没有，请求服务器
-        //参考：http://open.weibo.com/wiki/2/statuses/user_timeline
-        $req =& new HTTP_Request('/statuses/user_timeline.json'); 
-        $req->setMethod(HTTP_REQUEST_METHOD_GET);
-        $req->addQueryString('user_id', $uid);	
-        $req->addQueryString('source', MBLOG_APP_KEY); 
-        $req->addQueryString('count',$count); 
-        $req->addQueryString('page', $page); 
-        $rs = $req->sendRequest();
-
-        if (PEAR::isError($rs)
-            || false === ( $data = $req->getResponseBody() )
-            || false === ( $data = json_decode($data, true) )
-            || isset($data["error"])
-            || isset($data["error_code"])
-        ) {
-            return false;
-        }
-       
-        //缓存起来900秒（15分钟）
-		$mem->set($key, json_encode($data), 0, 900);
-    }
-
-    return $data;
+    return s_weibo_http($url, $weibo, "post");
 }
 
-function s_send_to_my_wblog($content) {
-	$req =& new HTTP_Request('http://api.t.sina.com.cn/statuses/update.json');    			
-	$req->setMethod(HTTP_REQUEST_METHOD_POST);
-	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
-	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
-	$req->addPostData('status', URLEncode($content));	
-	$req->addPostData('source',MBLOG_APP_KEY);
-	$rs = $req->sendRequest();
-    if (PEAR::isError($rs)
-        || false === ( $data = json_decode($req->getResponseBody(), true) )
-        || isset($data["erro"])
+//用户回复微博
+function s_user_reply_weibo($weibo) {
+    if (s_bad_array($weibo)
+        || s_bad_id($weibo["id"])
+        || s_bad_string($weibo["comment"])
     ) {
         return false;
-	}
+    }
 
-    return $data;
+    return s_weibo_http("https://api.weibo.com/2/comments/create.json", $weibo);
 }
 
-function s_repost_twblog($content, $mid) {
-	$req =& new HTTP_Request('https://api.weibo.com/2/statuses/repost.json');    				
-	$req->setMethod(HTTP_REQUEST_METHOD_POST);
-	$req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));                     
-	$req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));	
-	//$req->addPostData('status', URLEncode($content));
-	$req->addPostData('status', $content);	
-	$req->addPostData('source',MBLOG_APP_KEY);
-	$req->addPostData('id',$mid);
-	$rs = $req->sendRequest();
-	if (!PEAR::isError($rs))
-	{
-		$data= $req->getResponseBody();
-	}
-	return json_decode($data, true);
+//用户回复评论
+function s_user_reply_comment($weibo) {
+    if (s_bad_array($weibo)
+        || s_bad_id($weibo["id"])
+        || s_bad_string($weibo["comment"])
+    ) {
+        return false;
+    }
+
+    return s_weibo_http("https://api.weibo.com/2/comments/reply.json", $weibo);
 }
+
