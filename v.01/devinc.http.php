@@ -54,20 +54,6 @@ function s_http_response($url, &$params=false, $method=true) {
         unset($params["cookie"]);
     }
 
-    if (isset($params["file"])) {
-        //有文件要上传
-        curl_setopt($curl, CURLOPT_POST, 1);
-
-        foreach ($params["file"] as &$value) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
-
-            unset($value);
-        }
-
-        unset($params["file"]);
-    }
-
-
     //将余下的post字段添加到http请求中
     $arr = array();
 
@@ -92,6 +78,10 @@ function s_http_response($url, &$params=false, $method=true) {
     curl_close($curl);
 
     return $ret;
+}
+
+
+function s_http_boundary(&$binarys) {
 }
 
 

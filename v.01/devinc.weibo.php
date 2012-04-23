@@ -25,6 +25,49 @@ function s_weibo_http($url, &$params=false, $method="get") {
     //添加APPKEY
     $params["source"] = APP_KEY;
 
+
+    $boundarys = array();
+
+    if (isset($params["avatar"])) {
+        //上传头像
+        //检查数据是二进制文件还是路径
+        if (is_string($params["avatar"])) {
+            $boundarys["image"] = '@' . $params["avatar"];
+
+        } else {
+            //二进制文件
+            $boundarys["image"] = &$params["avatar"];
+        }
+
+        unset($params["avator"]);
+    }
+
+
+    if (isset($params["image"])) {
+        //上传图片
+        //检查数据是二进制文件还是路径
+        if (is_string($params["image"])) {
+            $boundarys["image"] = '@' . $params["image"];
+
+        } else {
+            //二进制文件
+            $boundarys["pic"] = &$params["image"];
+        }
+
+        unset($params["image"]);
+    }
+
+    if (isset($params["file"])) {
+        //一般文件
+        foreach ($params["file"] as &$value) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+
+            unset($value);
+        }
+
+        unset($params["file"]);
+    }
+
     if (false === ( $data = s_http_json($url, $params, $method) )
         || isset($data["error_code"])
     ) {
