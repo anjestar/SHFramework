@@ -21,7 +21,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params=false, $method=true) {
+function s_http_response($url, &$params=false, $method="get") {
     if (s_bad_string($url)) {
         return false;
     }
@@ -54,35 +54,92 @@ function s_http_response($url, &$params=false, $method=true) {
         unset($params["cookie"]);
     }
 
-    if (isset($params["file"])) {
-        //有文件要上传
-        curl_setopt($curl, CURLOPT_POST, 1);
+    //将余下的post字段添加到http请求中
+    $arr = array();
 
-        foreach ($params["file"] as &$value) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+    if ($method === "get") {
+        //GET
+        foreach ($params as $key => &$value) {
+            if (is_scalar($value)) {
+                $arr[] = $key . "=" . urlencode($value);
+            }
 
             unset($value);
         }
 
-        unset($params["file"]);
-    }
-
-
-    //将余下的post字段添加到http请求中
-    $arr = array();
-
-    foreach ($params as $key => $value) {
-        $arr[] = $key . "=" . urlencode($value);
-    }
-
-    if ($method === "get") {
-        //GET
         $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
 
-    } else {
+    } else if ($method === "post") {
         //POST
+
+        //post头部开始
+        //$streamed = false;
+        //$boundary = uniqid('------------------');
+
+        //$start    = '--' . $boundary;
+        //$end      = $start . '--';
+        //$body     = '';
+
         curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $arr));
+
+        $files  = array();
+        $fileds = array();
+
+
+        foreach ($params as $name => &$value) {
+            /*
+            if (substr($value, 0, 1) === '@') {
+                //二进制数据（图片）
+                $body .= $start . "\r\n";
+                $body .= 'Content-Disposition: form-data; name="' . $name . '"; filename="wiki.jpg"' . "\r\n";
+                $body .= 'Content-Type: image/jpg'. "\r\n\r\n";
+                $body .= file_get_contents(substr($value, 1)) . "\r\n";
+
+                $streamed = true;
+
+            } else {
+                //一般字符串
+                $body .= $start . "\r\n";
+                $body .= 'Content-Disposition: form-data; name="' . $name . '"' . "\r\n\r\n";
+                $body .= $value . "\r\n";
+            }
+             */
+
+            if (substr($value, 0, 1) === '@') {
+                //二进制文件
+                $files[$name] = $value;
+
+            } else {
+                $fileds[] = $name . '=' . $value;
+            }
+
+            unset($value);
+        }
+
+        if (count($files)) {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $files);
+        }
+
+        if (count($fileds)) {
+            curl_setopt($curl, CURLOPT_POSTFIELDS, implode('&', $fileds));
+        }
+
+
+        //$body .= "\r\n". $end;
+
+        //echo var_dump($body);
+
+        //curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($curl, CURLOPT_HEADER, true);
+        curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+
+        //echo curl_error($curl);
+
+
+        //if ($streamed) {
+            //$mpheader = array("Content-Type: multipart/form-data; boundary={$boundary}" , "Expect: ");
+            //curl_setopt($curl, CURLOPT_HTTPHEADER, $mpheader);
+        //}
     }
 
     //加载URL
@@ -92,6 +149,20 @@ function s_http_response($url, &$params=false, $method=true) {
     curl_close($curl);
 
     return $ret;
+
+
+    //是json格式，做检查
+    //if ('json' === substr($ret, strrpos($ret, '.') + 1) ) {
+        if (false === ( $pos1 = strpos($ret, '{') )
+            || false === ( $pos2 = strrpos($ret, '}') ) 
+        ) {
+            return false;
+        }
+
+        return substr($ret, $pos1, $pos2);
+    //}
+
+    //return $ret;
 }
 
 
