@@ -100,7 +100,9 @@ function &s_db_close(&$dbh) {
         }
 	}
 
-    unset($dbh);
+    $dbh = null;
+
+    return $dbh;
 }
 
 
@@ -159,7 +161,7 @@ function s_db_exec($sql) {
 
     $ret = $db->exec($sql);
 
-    if (!PEAR::isError($ret)) {
+    if (PEAR::isError($ret)) {
         //执行失败
         $ret = false;
     }
@@ -201,7 +203,7 @@ function s_db_exec($sql) {
 
 
 // 数据操作
-function s_db($table, &$v1, &$v2=false) {
+function s_db($table, &$v1, $v2=false) {
     if (s_bad_string($table)) {
         return s_log_arg();
     }

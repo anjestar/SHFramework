@@ -70,3 +70,16 @@ function s_string_2dir($path, $mask=0755) {
         "dir" => $_SERVER["SINASRV_CACHE_DIR"] . $path,
     );
 }
+
+
+function s_float_value($float) {
+    if (is_float($float)) {
+        $float = sprintf("%f", $float);
+    }
+
+    if (false === ( $pos = strpos($float, '.') )) {
+        return $float;
+    }
+
+    return substr($float, 0, $pos);
+}

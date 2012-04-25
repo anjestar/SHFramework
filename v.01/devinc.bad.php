@@ -134,7 +134,7 @@ function s_bad_key(&$obj, &$key, &$var=false) {
 }
 
 
-function s_bad_int($key, &$var=false, &$method="post") {
+function s_bad_int($key, &$var=false, $method="post") {
     $values = false;
 
     if ($method === "post") {
@@ -153,7 +153,7 @@ function s_bad_int($key, &$var=false, &$method="post") {
 }
 
 
-function s_bad_text($key, &$var=false, &$method="post") {
+function s_bad_text($key, &$var=false, $method="post") {
     $values = false;
 
     if ($method === "post") {
