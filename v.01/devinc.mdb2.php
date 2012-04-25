@@ -41,6 +41,10 @@
 //  s_db_primary($sql, $id)
 //      返回表主键对应的数据
 //
+//  s_db_where($table, $where)
+//      返回表主键对应的数据
+//          s_db_where("user", array("`name`" => "duanyong", "limit" => "0, 3", "order"=> "`uid` desc, `age` asc"))
+//
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -149,6 +153,7 @@ function s_db_one($sql) {
 
     return PEAR::isError($one) ? false : $one;
 }
+
 
 
 //更新数据或插入数据（此处不清除缓存，不操作缓存）
@@ -261,6 +266,48 @@ function s_db_primary($table, $id) {
     $sql    = "select * from {$prefix}{$table} where `id`= {$id}";
 
     return s_db_row($sql);
+}
+
+
+//根据where数组中的条件返回数据
+function s_db_where($table, $where) {
+    if (s_bad_string($table)) {
+        return false;
+    }
+
+
+    if (defined("APP_DB_PREFIX")) {
+        $table = APP_DB_PREFIX . "_" . $table;
+    }
+
+
+    if (s_bad_string($where["order"], $order)) {
+        //获取order字段
+        $order = "";
+
+    } else {
+        $order = " order by " . $order;
+    }
+
+    unset($where["order"]);
+
+
+    if (s_bad_string($where["limit"], $limit)) {
+        //获取limit字段
+        $limit = "";
+
+    } else {
+        $limit = " limit " . $limit;
+    }
+
+    unset($where["limit"]);
+
+
+    $sql = "select * from `{$table}`";
+    $sql .= empty($where) ? "" : " where " . implode(" and ", $where);
+    $sql .= $order . $limit;
+
+    return s_db_list($sql);
 }
 
 
