@@ -26,37 +26,28 @@ function s_weibo_http($url, &$params=false, $method="get") {
     $params["source"] = APP_KEY;
 
     //上传图片
-    if (isset($params["pic"])) {
+    if (isset($params["pic"])
+        && is_string($params["pic"])
+        && substr($params["pic"], 0, 1) === '@'
+    ) {
         //检查数据是二进制文件还是路径
-        if (is_string($params["pic"])
-        ) {
-            //$params["pic"] = file_get_contents($params["pic"]);
-        }
+        $params["_name"] = "pic";
+        $params["_data"] = file_get_contents(substr($params["pic"], 1));
 
+        unset($params["pic"]);
     }
 
     //上传头像
-    if (isset($params["image"])) {
+    if (isset($params["image"])
+        && is_string($params["image"])
+        && substr($params["image"], 0, 1) === '@'
+    ) {
         //检查数据是二进制文件还是路径
-        if (is_string($params["image"])
-            && substr($params["image"], 0, 1) === '@'
-        ) {
-            $params["image"] = file_get_contents($params["image"]);
-        }
+        $params["_name"] = "image";
+        $params["_data"] = file_get_contents(substr($params["image"], 1));
+
+        unset($params["_image"]);
     }
-
-    /*
-    if (isset($params["file"])) {
-        //一般文件
-        foreach ($params["file"] as &$value) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
-
-            unset($value);
-        }
-
-        unset($params["file"]);
-    }
-     */
 
 
     if (false === ( $data = s_http_json($url, $params, $method) )
