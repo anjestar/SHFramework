@@ -251,7 +251,6 @@ function s_db($table, &$v1, $v2=false) {
 }
 
 
-
 // 返回主键对应的数据
 function s_db_primary($table, $id) {
     if (s_bad_string($table)

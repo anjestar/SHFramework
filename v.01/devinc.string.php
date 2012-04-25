@@ -72,12 +72,15 @@ function s_string_2dir($path, $mask=0755) {
 }
 
 
-function s_float_value($float) {
+function s_float_value($float, $int=true) {
     if (is_float($float)) {
         $float = sprintf("%f", $float);
     }
 
-    if (false === ( $pos = strpos($float, '.') )) {
+    if ($int !== true
+        || false === ( $pos = strpos($float, '.') )
+    ) {
+        //不做整形处理或没有小数点
         return $float;
     }
 
