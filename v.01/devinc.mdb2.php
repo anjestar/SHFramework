@@ -79,7 +79,7 @@ function &s_db_slink() {
         'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
         'database' => $_SERVER['SINASRV_DB4_NAME_R'],
 //		'charset'  => 'utf8',
-);
+    );
 
 	$db = MDB2::connect($dsn);
     if (MDB2::isError($db)) {
@@ -92,7 +92,7 @@ function &s_db_slink() {
 }
 
 //Disconnecting a database
-function &s_db_close(&$dbh) {
+function s_db_close(&$dbh) {
 	if (is_object($dbh)) {
         try {
             $dbh->disconnect();
@@ -101,8 +101,6 @@ function &s_db_close(&$dbh) {
 	}
 
     $dbh = null;
-
-    return $dbh;
 }
 
 
