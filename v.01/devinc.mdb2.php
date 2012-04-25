@@ -42,8 +42,8 @@
 //      返回表主键对应的数据
 //
 //  s_db_where($table, $where)
-//      返回表主键对应的数据
-//          s_db_where("user", array("`name`" => "duanyong", "limit" => "0, 3", "order"=> "`uid` desc, `age` asc"))
+//      根据条件数组返回列表数据
+//          s_db_where("user", array("`name`='duanyong'", "`age`>=24" "limit" => "0, 3", "order"=> "`uid` desc, `age` asc"))
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +269,7 @@ function s_db_primary($table, $id) {
 }
 
 
-//根据where数组中的条件返回数据
+// 根据where数组中的条件返回列表数据
 function s_db_where($table, $where) {
     if (s_bad_string($table)) {
         return false;
