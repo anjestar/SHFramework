@@ -203,7 +203,13 @@ function s_users_by_uids(&$uids, $encoded=false) {
 
 
 //用户发布徽博
-function s_user_post_weibo($weibo) {
+function s_user_post(&$weibo) {
+    if (is_string($weibo)) {
+        $weibo = array(
+            "status" => $weibo,
+        );
+    }
+
     if (s_bad_array($weibo)
         || s_bad_string($weibo["status"])
     ) {
