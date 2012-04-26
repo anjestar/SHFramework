@@ -203,7 +203,13 @@ function s_users_by_uids(&$uids, $encoded=false) {
 
 
 //用户发布徽博
-function s_user_post_weibo($weibo) {
+function s_user_post(&$weibo) {
+    if (is_string($weibo)) {
+        $weibo = array(
+            "status" => $weibo,
+        );
+    }
+
     if (s_bad_array($weibo)
         || s_bad_string($weibo["status"])
     ) {
@@ -246,4 +252,20 @@ function s_user_reply_comment($weibo) {
     }
 
     return s_weibo_http("https://api.weibo.com/2/comments/reply.json", $weibo);
+}
+
+
+//用户关注某人
+function s_user_follow($fuid) {
+    if (s_bad_id($fuid)) {
+        return false;
+    }
+
+    $data = array(
+        "uid" => $fuid,
+    );
+
+    //2.0接口返回程序未被授权
+    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
+    return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
 }

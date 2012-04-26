@@ -14,14 +14,14 @@
 //	s_db_close($db)
 //	    关闭数据库链接
 //
-//	s_db_list($sql)
-//      返回列表数据（不从memcache缓存中获取数据）
+//	s_db_list($sql, $prefix=true)
+//      返回列表数据，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
 //
-//  s_db_row($sql)
-//      返回某行数据（不从memcache缓存中获取数据）
+//  s_db_row($sql, $prefix=true)
+//      返回某行数据，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
 //
-//  s_db_one($sql)
-//      返回某个字段值（不从memcache缓存中获取数据）
+//  s_db_one($sql, $prefix=true)
+//      返回某个字段值，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
 //
 //  s_db_exec($sql)
 //      执行sql语句（update或insert）
@@ -116,7 +116,7 @@ function s_db_list($sql) {
         return false;
     }
 
-    $list = $db->queryAll($sql);
+    $list = $db->queryAll(_s_db_prefix($sql));
     s_db_close($db);
 
     return PEAR::isError($list) ? false : $list;
@@ -131,7 +131,7 @@ function s_db_row($sql) {
         return false;
     }
 
-    $row = $db->queryRow($sql);
+    $row = $db->queryRow(_s_db_prefix($sql));
     s_db_close($db);
 
     return PEAR::isError($row) ? false : $row;
@@ -146,7 +146,7 @@ function s_db_one($sql) {
         return false;
     }
 
-    $one = $db->queryOne($sql);
+    $one = $db->queryOne(_s_db_prefix($sql));
     s_db_close($db);
 
     return PEAR::isError($one) ? false : $one;
@@ -266,45 +266,77 @@ function s_db_primary($table, $id) {
 }
 
 
-// 根据where数组中的条件返回列表数据
-function s_db_where($table, $where) {
-    if (s_bad_string($table)) {
-        return false;
+//添加sql语句中的表前缀
+function _s_db_prefix($sql) {
+    if (!defined("APP_DB_PREFIX")) {
+        //没有定义表前缀
+        return $sql;
     }
 
+    $sql = trim($sql);
+    $sql = explode(" from ", $sql);
 
-    if (defined("APP_DB_PREFIX")) {
-        $table = APP_DB_PREFIX . "_" . $table;
+    if (( $times = count($sql) - 1 ) >= 1) {
+        do {
+            $str = $sql[$times];
+            $pos = strpos($str, ' ');
+            if ($pos !== false) {
+                $str = substr($str, 0, $pos);
+            }
+
+            $str = str_replace('`', '', $str);
+            $p1  = strpos($str, '_');
+
+            if ($p1 !== false
+                && APP_DB_PREFIX === substr($t, 0, $p1)
+            ) {
+                //已经有前缀，不再处理
+                continue;
+            }
+
+            //组合成新的from '`APP_DB_PREFIX_user`'
+            $p1 = $sql[$times];
+            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`' . substr($p1, $pos);
+
+        } while (( -- $times ) > 0);
+
+        $sql = implode(' from ', $sql);
     }
 
+    if (strpos($sql, 'update ') !== false) {
+        //update语句
+        $sql = explode('update ', $sql);
+        $times = count($sql) - 1;
 
-    if (s_bad_string($where["order"], $order)) {
-        //获取order字段
-        $order = "";
+        do {
+            $str = $sql[$times];
+            $pos = strpos($str, ' ');
+            if ($pos !== false) {
+                $str = substr($str, 0, $pos);
+            }
 
-    } else {
-        $order = " order by " . $order;
+            $str = str_replace('`', '', $str);
+            $p1  = strpos($str, '_');
+
+            if ($p1 !== false
+                && APP_DB_PREFIX === substr($str, 0, $p1)
+            ) {
+                //已经有前缀，不再处理
+                continue;
+            }
+
+            //组合成新的from '`APP_DB_PREFIX_user`'
+            $p1 = $sql[$times];
+            //echo "p1:", $p1, "pos:", $pos, "\n";
+            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`';
+            $sql[$times] .= ( $pos === false ? '' : substr($p1, $pos) );
+
+        } while (( -- $times ) > 0);
+
+        $sql = implode('update ', $sql);
     }
 
-    unset($where["order"]);
-
-
-    if (s_bad_string($where["limit"], $limit)) {
-        //获取limit字段
-        $limit = "";
-
-    } else {
-        $limit = " limit " . $limit;
-    }
-
-    unset($where["limit"]);
-
-
-    $sql = "select * from `{$table}`";
-    $sql .= empty($where) ? "" : " where " . implode(" and ", $where);
-    $sql .= $order . $limit;
-
-    return s_db_list($sql);
+    return $sql;
 }
 
 

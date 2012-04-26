@@ -18,6 +18,7 @@ function s_weibo_http($url, &$params=false, $method="get") {
         $params = array();
     }
 
+
     //添加COOKIE
     $params["cookie"]["SUE"] = $_COOKIE["SUE"];
     $params["cookie"]["SUP"] = $_COOKIE["SUP"];
