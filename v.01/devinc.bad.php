@@ -126,7 +126,7 @@ function s_bad_key(&$obj, &$key, &$var=false) {
         return !isset($obj[$key]);
     }
 
-    if (isset($obj[$key]) {
+    if (isset($obj[$key])) {
         $var = $obj[$key];
     }
 
@@ -134,7 +134,7 @@ function s_bad_key(&$obj, &$key, &$var=false) {
 }
 
 
-function s_bad_int($key, &$var=false, &$method="post") {
+function s_bad_int($key, &$var=false, $method="post") {
     $values = false;
 
     if ($method === "post") {
@@ -153,14 +153,14 @@ function s_bad_int($key, &$var=false, &$method="post") {
 }
 
 
-function s_bad_text($key, &$var=false, &$method="post") {
+function s_bad_text($key, &$var=false, $method="post") {
     $values = false;
 
     if ($method === "post") {
-        $method = &$_POST;
+        $values = &$_POST;
 
     } else if ($method === "get") {
-        $method = &$_GET;
+        $values = &$_GET;
     }
 
     if ($values === false) {

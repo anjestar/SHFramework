@@ -41,6 +41,10 @@
 //  s_db_primary($sql, $id)
 //      返回表主键对应的数据
 //
+//  s_db_where($table, $where)
+//      根据条件数组返回列表数据
+//          s_db_where("user", array("`name`='duanyong'", "`age`>=24" "limit" => "0, 3", "order"=> "`uid` desc, `age` asc"))
+//
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -79,7 +83,7 @@ function &s_db_slink() {
         'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
         'database' => $_SERVER['SINASRV_DB4_NAME_R'],
 //		'charset'  => 'utf8',
-);
+    );
 
 	$db = MDB2::connect($dsn);
     if (MDB2::isError($db)) {
@@ -92,7 +96,7 @@ function &s_db_slink() {
 }
 
 //Disconnecting a database
-function &s_db_close(&$dbh) {
+function s_db_close(&$dbh) {
 	if (is_object($dbh)) {
         try {
             $dbh->disconnect();
@@ -100,7 +104,7 @@ function &s_db_close(&$dbh) {
         }
 	}
 
-    unset($dbh);
+    $dbh = null;
 }
 
 
@@ -149,6 +153,7 @@ function s_db_one($sql) {
 }
 
 
+
 //更新数据或插入数据（此处不清除缓存，不操作缓存）
 function s_db_exec($sql) {
     if (s_bad_string($sql, $sql)
@@ -159,7 +164,7 @@ function s_db_exec($sql) {
 
     $ret = $db->exec($sql);
 
-    if (!PEAR::isError($ret)) {
+    if (PEAR::isError($ret)) {
         //执行失败
         $ret = false;
     }
@@ -201,7 +206,7 @@ function s_db_exec($sql) {
 
 
 // 数据操作
-function s_db($table, &$v1, &$v2=false) {
+function s_db($table, &$v1, $v2=false) {
     if (s_bad_string($table)) {
         return s_log_arg();
     }
@@ -246,7 +251,6 @@ function s_db($table, &$v1, &$v2=false) {
 }
 
 
-
 // 返回主键对应的数据
 function s_db_primary($table, $id) {
     if (s_bad_string($table)
@@ -259,6 +263,48 @@ function s_db_primary($table, $id) {
     $sql    = "select * from {$prefix}{$table} where `id`= {$id}";
 
     return s_db_row($sql);
+}
+
+
+// 根据where数组中的条件返回列表数据
+function s_db_where($table, $where) {
+    if (s_bad_string($table)) {
+        return false;
+    }
+
+
+    if (defined("APP_DB_PREFIX")) {
+        $table = APP_DB_PREFIX . "_" . $table;
+    }
+
+
+    if (s_bad_string($where["order"], $order)) {
+        //获取order字段
+        $order = "";
+
+    } else {
+        $order = " order by " . $order;
+    }
+
+    unset($where["order"]);
+
+
+    if (s_bad_string($where["limit"], $limit)) {
+        //获取limit字段
+        $limit = "";
+
+    } else {
+        $limit = " limit " . $limit;
+    }
+
+    unset($where["limit"]);
+
+
+    $sql = "select * from `{$table}`";
+    $sql .= empty($where) ? "" : " where " . implode(" and ", $where);
+    $sql .= $order . $limit;
+
+    return s_db_list($sql);
 }
 
 

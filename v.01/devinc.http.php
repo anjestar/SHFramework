@@ -6,6 +6,8 @@
 //
 //	s_http_response($url, &$params, $method)
 //	    返回一个http response
+//	    参数中$params["_name"]和$params["_data"]分别给上传二进制数据准备，其它数据不可占用。
+//	    参数中文件路径
 //  
 //	s_http_get($url, &$params=false)
 //	    返回通过get获取的response对象
@@ -21,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params=false, $method=true) {
+function s_http_response($url, &$params=false, $method="get") {
     if (s_bad_string($url)) {
         return false;
     }
@@ -46,7 +48,7 @@ function s_http_response($url, &$params=false, $method=true) {
         $arr = array();
 
         foreach($params["cookie"] as $key => $value) {
-            $arr[] = $key . "=" . urlencode($value);
+            $arr[] = $key . "=" . rawurlencode($value);
         }
 
         curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
@@ -54,50 +56,104 @@ function s_http_response($url, &$params=false, $method=true) {
         unset($params["cookie"]);
     }
 
-    if (isset($params["file"])) {
-        //有文件要上传
-        curl_setopt($curl, CURLOPT_POST, 1);
+    //将余下的post字段添加到http请求中
+    $arr = array();
 
-        foreach ($params["file"] as &$value) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params["file"]);
+    if ($method === "get") {
+        //GET
+        foreach ($params as $key => &$value) {
+            if (is_scalar($value)) {
+                $arr[] = $key . "=" . rawurlencode($value);
+            }
 
             unset($value);
         }
 
-        unset($params["file"]);
-    }
-
-
-    //将余下的post字段添加到http请求中
-    $arr = array();
-
-    foreach ($params as $key => $value) {
-        $arr[] = $key . "=" . urlencode($value);
-    }
-
-    if ($method !== true) {
-        //GET
         $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
 
-    } else {
+    } else if ($method === "post") {
         //POST
         curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $arr));
+
+        if (isset($params["_name"])
+            && isset($params["_data"])
+        ) {
+            //有图片数据提交
+            _s_http_post1($curl, $params);
+
+        } else {
+            //简单数据提交
+            _s_http_post2($curl, $params);
+        }
+
+
+        //加载URL
+        curl_setopt($curl, CURLOPT_URL, $url);
+        $ret = curl_exec($curl);
+
+        curl_close($curl);
+
+        return $ret;
+    }
+}
+
+
+function _s_http_post1(&$curl, &$params) {
+    $boundary = uniqid('------------------');
+
+    $start    = '--' . $boundary;
+    $end      = $start . '--';
+    $body     = '';
+
+    //图片数据有$params["_name"]和$params["_data"]变量
+    $mpheader = array("Content-Type: multipart/form-data; boundary={$boundary}" , "Expect: ");
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $mpheader);
+
+    //二进制数据（图片）
+    $body .= $start . "\r\n";
+    $body .= 'Content-Disposition: form-data; name="' . $params["_name"] . '"; filename="wiki.jpg"' . "\r\n";
+    $body .= 'Content-Type: image/jpg'. "\r\n\r\n";
+    $body .= $params["_data"] . "\r\n";
+
+
+    unset($params["_name"]);
+    unset($params["_data"]);
+
+
+    //余下就是一般字符串数据
+    foreach ($params as $name => &$value) {
+        //一般字符串
+        $body .= $start . "\r\n";
+        $body .= 'Content-Disposition: form-data; name="' . $name . '"' . "\r\n\r\n";
+        $body .= $value . "\r\n";
+
+        unset($value);
     }
 
-    //加载URL
-    curl_setopt($curl, CURLOPT_URL, $url);
-    $ret = curl_exec($curl);
+    $body .= "\r\n". $end;
 
-    curl_close($curl);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+}
 
-    return $ret;
+
+function _s_http_post2(&$curl, &$params) {
+    $posts = array();
+
+    foreach ($params as $name => &$value) {
+        $posts[] = $name . "=" . rawurlencode($value);
+
+        unset($value);
+    }
+
+    curl_setopt($curl, CURLOPT_POSTFIELDS, implode(";&", $posts));
+
+    unset($posts);
 }
 
 
 function s_http_get($url, &$params=false) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, false) )
+        || false === ( $response = s_http_response($url, $params, "get") )
     ) {
         return false;
     }
@@ -108,7 +164,7 @@ function s_http_get($url, &$params=false) {
 
 function s_http_post($url, &$params=false) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, true) )
+        || false === ( $response = s_http_response($url, $params, "post") )
     ) {
         return false;
     }
@@ -117,12 +173,12 @@ function s_http_post($url, &$params=false) {
 }
 
 
-function s_http_json($url, &$params=false, $method=true) {
-    if (s_bad_string($utl)) {
+function s_http_json($url, &$params=false, $method="get") {
+    if (s_bad_string($url)) {
         return false;
     }
 
-    $response = ( $method === true ? s_http_post($url, $params) : s_http_get($url, $params) );
+    $response = s_http_response($url, $params, $method);
 
-    return json_decode($repsonse, true);
+    return json_decode($response, true);
 }

@@ -26,7 +26,7 @@ function s_string_length($string, $trim=false) {
     $len1 = strlen($string);
     $len2 = mb_strlen($string);
 
-    return $len1 === $len2 ? $len1 ? $len2;
+    return $len1 === $len2 ? $len1 : $len2;
 }
 
 
@@ -49,12 +49,40 @@ function s_string_safe($string, $trim=false) {
 
 //将字符串创建成目录
 function s_string_2dir($path, $mask=0755) {
-    if (s_bad_string($path)
-        || s_bad_id($mask)
+    if (s_bad_string($path)) {
+        return false;
+    }
+
+    if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
+        $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
+    }
+
+    if (!is_dir($real)
+        && !mkdir($real, $mask, true)
     ) {
         return false;
     }
 
+    return array(
+        // /data1/www/cache/all.vic.sina.com.cn/
+        // http://all.vic.sina.com.cn/cache
+        "url" => $_SERVER["SINASRV_CACHE_URL"] . "/" . $path,
+        "dir" => $_SERVER["SINASRV_CACHE_DIR"] . $path,
+    );
+}
 
-    return is_dir($path) ? true : mkdir($path, $mask, true);
+
+function s_float_value($float, $int=true) {
+    if (is_float($float)) {
+        $float = sprintf("%f", $float);
+    }
+
+    if ($int !== true
+        || false === ( $pos = strpos($float, '.') )
+    ) {
+        //不做整形处理或没有小数点
+        return $float;
+    }
+
+    return substr($float, 0, $pos);
 }
