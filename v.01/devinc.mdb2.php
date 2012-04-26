@@ -171,7 +171,7 @@ function s_db_exec($sql) {
 
     //是否执行成功
     if ($ret !== false
-        && "insert" === substr($sql, 0, strpos(" ", $sql))
+        && "insert" === substr($sql, 0, 6)
     ) {
         //插入成功，返回记录的主键
         $ret = $db->lastInsertID();
