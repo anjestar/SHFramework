@@ -76,21 +76,25 @@ function a_log_off() {
 function a_log($log=false, $level=E_USER_NOTICE) {
     $log = a_log_argument_tostring($log);
 
-    return trigger_error($log, $level) && false;
+    return false;
+    //return trigger_error($log, $level) && false;
 }
 
 
 function a_log_action() {
-    return trigger_error(null, E_USER_DEPRECATED) && false;
+    return false;
+    //return trigger_error(null, E_USER_DEPRECATED) && false;
 }
 
 
 function a_log_arg($log="warning arg") {
-    return trigger_error($log, E_USER_WARNING) && false;
+    return false;
+    //return trigger_error($log, E_USER_WARNING) && false;
 }
 
 function a_log_sql($log="warning sql") {
-    return trigger_error($log, E_USER_NOTICE) && false;
+    return false;
+    //return trigger_error($log, E_USER_NOTICE) && false;
 }
 
 function a_error($log) {
@@ -277,4 +281,4 @@ function a_log_debug_message() {
 
 
 //采用自定义的日志输出函数
-set_error_handler("a_log_hander", E_ALL);
+//set_error_handler("a_log_hander", E_ALL);

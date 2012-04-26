@@ -272,10 +272,15 @@ function s_db_where($table, $where) {
         return false;
     }
 
-
     if (defined("APP_DB_PREFIX")) {
         $table = APP_DB_PREFIX . "_" . $table;
     }
+
+    if (s_bad_string($where["select"], $select)) {
+        $select = "*";
+    }
+
+    unset($where["select"]);
 
 
     if (s_bad_string($where["order"], $order)) {
@@ -300,9 +305,10 @@ function s_db_where($table, $where) {
     unset($where["limit"]);
 
 
-    $sql = "select * from `{$table}`";
+    $sql = "select {$select} from `{$table}`";
     $sql .= empty($where) ? "" : " where " . implode(" and ", $where);
     $sql .= $order . $limit;
+
 
     return s_db_list($sql);
 }

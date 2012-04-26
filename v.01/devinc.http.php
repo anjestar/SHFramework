@@ -93,6 +93,7 @@ function s_http_response($url, &$params=false, $method="get") {
 
         curl_close($curl);
 
+        echo var_dump($ret);
         return $ret;
     }
 }

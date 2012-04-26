@@ -62,7 +62,7 @@ function s_bad_0id(&$id, &$var=false) {
 function s_bad_string(&$str, &$var=false, $trim=true) {
     if (!is_string($str)
         || $str !== strval($str)
-        || empty($str)
+        || trim($str) === ""
     ) {
         return true;
     }
@@ -167,6 +167,9 @@ function s_bad_text($key, &$var=false, $method="post") {
         return false;
     }
 
+    if(!isset($values[$key])) {
+        return true;
+    }
 
     return s_bad_string($values[$key], $var);
 }
