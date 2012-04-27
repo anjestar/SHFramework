@@ -60,7 +60,7 @@ function &s_db_plink() {
         'hostspec' => $_SERVER['SINASRV_DB4_HOST'],
         'port'     => $_SERVER['SINASRV_DB4_PORT'],
         'database' => $_SERVER['SINASRV_DB4_NAME'],
-//		'charset'  => 'utf8',
+		'charset'  => 'utf8',
 	);
 
 	$db = MDB2::connect($dsn);
@@ -82,7 +82,7 @@ function &s_db_slink() {
         'hostspec' => $_SERVER['SINASRV_DB4_HOST_R'],
         'port'     => $_SERVER['SINASRV_DB4_PORT_R'],
         'database' => $_SERVER['SINASRV_DB4_NAME_R'],
-//		'charset'  => 'utf8',
+        'charset'  => 'utf8',
     );
 
 	$db = MDB2::connect($dsn);
@@ -288,7 +288,7 @@ function _s_db_prefix($sql) {
             $p1  = strpos($str, '_');
 
             if ($p1 !== false
-                && APP_DB_PREFIX === substr($t, 0, $p1)
+                && APP_DB_PREFIX === substr($str, 0, $p1)
             ) {
                 //已经有前缀，不再处理
                 continue;
@@ -327,7 +327,6 @@ function _s_db_prefix($sql) {
 
             //组合成新的from '`APP_DB_PREFIX_user`'
             $p1 = $sql[$times];
-            //echo "p1:", $p1, "pos:", $pos, "\n";
             $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`';
             $sql[$times] .= ( $pos === false ? '' : substr($p1, $pos) );
 
@@ -433,7 +432,8 @@ function _s_db_update($table, &$v1, &$v2) {
     }
 
     $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
-    $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`= {$v1[$pid]}";
+    $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`={$pid}";
+    echo var_dump($sql);
 
     return s_db_exec($sql);
 }

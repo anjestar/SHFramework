@@ -222,7 +222,7 @@ function s_user_post(&$weibo) {
 
     } else {
         //发文字微博
-        $url = "https://api.weibo.com/2/statuses/update.json";
+        $url = "http://api.t.sina.com.cn/statuses/update.json";
     }
 
     return s_weibo_http($url, $weibo, "post");
