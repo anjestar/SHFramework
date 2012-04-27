@@ -260,7 +260,7 @@ function s_db_primary($table, $id) {
     }
 
     $prefix = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
-    $sql    = "select * from {$prefix}{$table} where `id`= {$id}";
+    $sql    = "select * from `{$prefix}{$table}` where `id`={$id} limit 1";
 
     return s_db_row($sql);
 }
@@ -296,7 +296,8 @@ function _s_db_prefix($sql) {
 
             //组合成新的from '`APP_DB_PREFIX_user`'
             $p1 = $sql[$times];
-            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`' . substr($p1, $pos);
+            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`'
+                . ( $pos !== false ? substr($p1, $pos) : "" );
 
         } while (( -- $times ) > 0);
 
@@ -433,7 +434,6 @@ function _s_db_update($table, &$v1, &$v2) {
 
     $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
     $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`={$pid}";
-    echo var_dump($sql);
 
     return s_db_exec($sql);
 }
