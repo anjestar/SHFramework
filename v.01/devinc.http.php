@@ -93,7 +93,6 @@ function s_http_response($url, &$params=false, $method="get") {
 
         curl_close($curl);
 
-        echo var_dump($ret);
         return $ret;
     }
 }
@@ -175,11 +174,11 @@ function s_http_post($url, &$params=false) {
 
 
 function s_http_json($url, &$params=false, $method="get") {
-    if (s_bad_string($url)) {
+    if (s_bad_string($url)
+        || false === ( $response = s_http_response($url, $params, $method) )
+    ) {
         return false;
     }
-
-    $response = s_http_response($url, $params, $method);
 
     return json_decode($response, true);
 }
