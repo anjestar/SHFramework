@@ -225,11 +225,7 @@ function s_user_post(&$weibo) {
         $url = "http://api.t.sina.com.cn/statuses/update.json";
     }
 
-    $data = s_weibo_http($url, $weibo, "post");
-    evho var_dump($data);
-
-    return $data;
-    //return s_weibo_http($url, $weibo, "post");
+    return s_weibo_http($url, $weibo, "post");
 }
 
 
