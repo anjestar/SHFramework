@@ -173,3 +173,27 @@ function s_bad_text($key, &$var=false, $method="post") {
 
     return s_bad_string($values[$key], $var);
 }
+
+
+//返回post值
+function s_bad_post(&$key, &$var=false, &$type="string") {
+    if (s_bad_string($key)) {
+        return false;
+    }
+
+    if (!isset($_POST[$key])) {
+        return true;
+    }
+
+    if ($type === "string") {
+        //字符类型
+        return s_bad_string($_POST[$key], $var);
+
+    } else if ($type === "int") {
+        //整型
+        return s_bad_id($_POST[$key], $var);
+
+    } else if ($type === "email") {
+        return s_bad_id($_POST[$key], $var);
+    }
+}
