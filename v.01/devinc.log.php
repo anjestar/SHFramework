@@ -13,22 +13,22 @@
 //	    01:01:02.290090 [error] argument is null [/devinc.mysql.php:15]
 //
 //
-//	a_log($log)
+//	s_log($log)
 //	    输出日志
 //
-//	a_log_arg($log)
+//	s_err_arg($log)
 //
-//	a_log_sql($log)
+//	s_err_sql($log)
 //
-//	a_log_action($log)
+//	s_err_action($log)
 //
-//	a_error($log)
+//	s_error($log)
 //	    中断执行
 //
-//	a_log_on()
+//	s_log_on()
 //	    开启日志输出
 //
-//	a_log_off()
+//	s_log_off()
 //	    关闭日志输出
 //
 //
@@ -44,21 +44,21 @@ $log_is_cli     = php_sapi_name() === "cli";    //是否在cli模式下运行
 
 
 //所有的错误信息都将提交到此，待cgi执行完成时再处理错误信息
-static $log_array   = array();
-static $log_action  = false;
+static $_traces   = array();
+static $traces_action  = false;
 
 
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 
-//error_reporting(E_ALL);
+error_reporting(E_ALL);
 
 //ini_set('display_errors', 'Off');
 
 
 //开启日志输出
-function a_log_on() {
+function s_log_on() {
     global $log_on;
 
     return $log_on = true;
@@ -66,219 +66,90 @@ function a_log_on() {
 
 
 //关闭日志输出
-function a_log_off() {
+function s_log_off() {
     global $log_on;
 
     return !( $log_on = false );
 }
 
 //E_USER_NOTICE	- 默认。用户生成的 run-time 通知。脚本发现了可能的错误，也有可能在脚本运行正常时发生。
-function a_log($log=false, $level=E_USER_NOTICE) {
-    $log = a_log_argument_tostring($log);
+function s_log($log=false, $level=E_USER_NOTICE) {
+    global $_traces;
+
+    $trace          = debug_backtrace();
+    $trace['msg']   = $log;
+
+    $_traces[]      = $trace;
 
     return false;
-    //return trigger_error($log, $level) && false;
 }
 
 
-function a_log_action() {
-    return false;
-    //return trigger_error(null, E_USER_DEPRECATED) && false;
+function s_err_action($log="warning action") {
+    return s_log('ACTION:' . $log);
 }
 
 
-function a_log_arg($log="warning arg") {
-    return false;
-    //return trigger_error($log, E_USER_WARNING) && false;
+function s_err_arg($log="warning arg") {
+    return s_log('ARG:' . $log);
 }
 
-function a_log_sql($log="warning sql") {
-    return false;
-    //return trigger_error($log, E_USER_NOTICE) && false;
+function s_err_sql($log="warning sql") {
+    return s_log('SQL:' . $log);
 }
 
-function a_error($log) {
-    trigger_error($log, E_ERROR) && false;
+function s_error($log="error, stop it!") {
+    s_log('ERR:' . $log);
 
     //中断脚本执行，返回PHP E_ERROR错误
     exit(E_ERROR);
 }
 
-
-function a_log_argument_tostring(&$arg) {
-    if (false === $arg) {
-        $arg = "empty log";
-
-    } else if (is_array($arg)) {
-        $arg = str_replace("\n", "", var_export($arg));
-
-    } else if (is_bool($arg)) {
-
-        $arg = $arg ? "bool(true)" : "bool(false)";
+function s_log_trace(&$trace, &$msg=false) {
+    if (!is_array($trace)) {
+        return false;
     }
 
-    return $arg;
-}
+    //s_err_sql("no such table");
+    $msg  = $msg ? ' =>' . $msg : '';
 
+    $args = array();
+    $list = $trace['args'];
+
+    foreach ($list as &$arg) {
+        $args[] = str_replace("\n", '', print_r($arg, true));
+
+        unset($arg);
+    }
+
+    //将debug_traceback转换成字符串
+    return sprintf("[%s] LOG:%s [%d]:%s(%s) %s", date('m-d H:i:s', s_action_time()), $trace['file'], $trace['line'], $trace['function'], implode(', ', $args), $msg);
+}
 
 
 //自定义日志输出函数
-function a_log_hander(&$no, &$log, &$file, &$line, &$context) {
-    //因为日志按项目的相对路径输出。如/home/duanyong/workspace/duanyong/login.php 应输出为/login.php
-    //debug_backtrace中file属性为绝对路径，需要将绝对路径换成项目的相对路径。
+function s_log_hander(&$no=0, &$log=false, &$file=false, &$line=0, &$context=false) {
+    global $_traces;
 
-    static $realdir, $linkdir;
+    $log = "";
 
-    if (!$realdir) {
-        if (is_link(FRAMEWORK_DIR)) {
-            //获取真正的系统路径
-            $linkdir = FRAMEWORK_DIR;
-            $realdir = readlink(FRAMEWORK_DIR);
+    foreach ($_traces as &$trace){
+        $msg = isset($trace['msg']) ? $trace['msg'] : false;
 
-        } else {
-            $realdir = FRAMEWORK_DIR;
+        for ($i = 2, $len = count($trace); $i < $len; ++ $i) {
+            //前两次调用属于s_err_arg => s_log，无用
+            $log .= "\n" . s_log_trace($trace[$i], $msg);
         }
+
+        unset($trace);
     }
 
 
-    $str    = "\n";
-    $time   = $_SERVER['REQUEST_TIME'];
-    $file   = str_replace(array($linkdir, $realdir), "", $file);
-    $log    = str_replace(array($linkdir, $realdir), "", $log);
-
-    $debug  = a_log_debug_message();
-
-    global $log_action;
-
-    if ($log_action === false) {
-        //2011-01-01 [duanyong:127.0.0.1] ACTION START /diary/add
-        $remote     = isset($_SERVER["REMOTE_ADDR"]) ? $_SERVER["REMOTE_ADDR"] : "-";
-        $username   = isset($_COOKIE["username"]) ? $_COOKIE["username"] : "-";
-
-        $str .= "\n" . date("Y-m-d", $time)                                             // 2011-01-01
-            . " [" . $username . ":" . $remote . "] ACTION START "                      // [duanyong:127.0.0.1e
-            //. str_replace(".php", "", $file) . "\n";                                    // /diary/add
-            . str_replace(".php", "", $debug["file"]);                                  // /diary/add
-
-        $log_action = true;
-    }
-
-
-    //    01:01:01.290086 [trace] [sql] select * from diary order by did desc limit 10 [/devinc.mysql.php:14]
-    $desc = null;
-
-    switch ($no) {
-    case E_ERROR:
-    case E_CORE_ERROR:
-    case E_USER_ERROR:
-    case E_COMPILE_ERROR:
-        $desc = "error";
-        break;
-
-    case E_WARNING:
-    case E_CORE_WARNING:
-    case E_USER_WARNING:
-    case E_COMPILE_WARNING:
-        $desc = "warning";
-        break;
-
-    case E_NOTICE:
-    case E_USER_NOTICE:
-        $desc = "notice";
-        break;
-
-    default:
-        $desc = "warning";
-    }
-
-
-    // 01:01:01.290086
-    $mc = microtime();
-    $t  = explode(" ", $mc);
-    $t  = substr($t[0], 1, strlen($t[0]));
-
-    $str .= "\t" . date("h:i:s", $time) . $t                // 01:01:01.290086
-        . " [" . $desc . "]"                                // [warning]
-        . " " . a_log_argument_tostring($log)               // bool(true)
-        . " [" . $file . ":" . $line . "]";                 // [/devinc.mysql.php:14]
-    //. " [" . $debug["file"] . "]:" . $debug["line"];      // [/devinc.mysql.php:14]
-
-
-    //追加到日志文件中
-    global $log_file, $log_is_cli, $log_on;
-
-    if ($log_is_cli) {
-        $stdout = fopen("php://stdout", "w");
-        fwrite($stdout, $str . "\n");
-        fclose($stdout);
-    }
-
-    if ($log_on) {
-        if (!is_writable($log_file)) {
-            $stdout = fopen("php://stdout", "w");
-            fwrite($stdout, "log file not writable, please check it.\n");
-            fclose($stdout);
-
-            return false;
-        }
-
-        error_log($str, 3, $log_file);
-    }
-
-    return true;
-}
-
-
-function a_log_debug_message() {
-    static $log_direction;
-
-    if (!$log_direction) {
-        if (is_link(FRAMEWORK_DIR)) {
-            //获取真正的系统路径
-            $log_direction = readlink(FRAMEWORK_DIR);
-
-        } else {
-            $log_direction = FRAMEWORK_DIR;
-        }
-
-
-        static $functions;
-
-        if (!$functions) {
-            $functions = array(
-                "a_log",
-                "a_log_arg",
-                "a_log_sql",
-                "a_log_action",
-            );
-        }
-
-        $trace  = array();
-        $traces = debug_backtrace();
-
-        //提取错误信息
-        foreach ($traces as &$t) {
-            if (isset($t["function"])
-                && ( $f = $t["function"] )
-                && in_array($f, $functions)
-            ) {
-                $trace["line"]      = $t["line"];
-                $trace["file"]      = str_replace($log_direction, "", $t["file"]);
-                $trace["function"]  = $f;
-
-                unset($t);
-                break;
-            }
-
-            unset($t);
-        }
-
-        unset($traces);
-
-        return $trace;
+    if ($log) {
+        //输出到页面中
+        print_r($log);
     }
 }
 
 
-//采用自定义的日志输出函数
-//set_error_handler("a_log_hander", E_ALL);
+register_shutdown_function('s_log_hander');

@@ -65,7 +65,7 @@ function &s_db_plink() {
 
 	$db = MDB2::connect($dsn);
 	if (MDB2::isError($db)) {
-		die($db->getMessage());
+        die(s_err_sql($db->getMessage()));
 	}
 
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
@@ -86,8 +86,8 @@ function &s_db_slink() {
     );
 
 	$db = MDB2::connect($dsn);
-    if (MDB2::isError($db)) {
-        die($db->getMessage());
+	if (MDB2::isError($db)) {
+        die(s_err_sql($db->getMessage()));
     }
 
     $db->setFetchMode(MDB2_FETCHMODE_ASSOC);
@@ -109,17 +109,28 @@ function s_db_close(&$dbh) {
 
 
 //获取列表数据（不从memcache缓存中获取数据）
-function s_db_list($sql) {
+function s_db_list($sql, $prefix=true) {
     if (s_bad_string($sql)
         || (false === ( $db = s_db_slink() ))
     ) {
         return false;
     }
 
-    $list = $db->queryAll(_s_db_prefix($sql));
+    if ($prefix === true) {
+        $sql = _s_db_prefix($sql);
+    }
+
+    $ret = $db->queryAll(_s_db_prefix($sql));
+
     s_db_close($db);
 
-    return PEAR::isError($list) ? false : $list;
+    if (PEAR::isError($ret)) {
+        s_err_sql($ret->getMessage());
+
+        $ret = false;
+    }
+
+    return $ret;
 }
 
 
@@ -131,25 +142,48 @@ function s_db_row($sql) {
         return false;
     }
 
-    $row = $db->queryRow(_s_db_prefix($sql));
+    if ($prefix === true) {
+        $sql = _s_db_prefix($sql);
+    }
+
+
+    $ret = $db->queryRow($sql);
     s_db_close($db);
 
-    return PEAR::isError($row) ? false : $row;
+    if (PEAR::isError($ret)) {
+        s_err_sql($ret->getMessage());
+
+        $ret = false;
+    }
+
+
+    return $row;
 }
 
 
 //获取某个字段值（不从memcache缓存中获取数据）
-function s_db_one($sql) {
+function s_db_one($sql, $prefix=true) {
     if (s_bad_string($sql)
         || (false === ( $db = s_db_slink() ))
     ) {
         return false;
     }
 
-    $one = $db->queryOne(_s_db_prefix($sql));
+    if ($prefix === true) {
+        $sql = _s_db_prefix($sql);
+    }
+
+
+    $ret = $db->queryOne($sql);
     s_db_close($db);
 
-    return PEAR::isError($one) ? false : $one;
+    if (PEAR::isError($ret)) {
+        s_err_sql($ret->getMessage());
+
+        $ret = false;
+    }
+
+    return $ret;
 }
 
 
@@ -165,7 +199,9 @@ function s_db_exec($sql) {
     $ret = $db->exec($sql);
 
     if (PEAR::isError($ret)) {
-        //执行失败
+        //记录失败
+        s_err_sql($ret->getMessage());
+
         $ret = false;
     }
 
@@ -208,7 +244,7 @@ function s_db_exec($sql) {
 // 数据操作
 function s_db($table, &$v1, $v2=false) {
     if (s_bad_string($table)) {
-        return s_log_arg();
+        return s_err_arg();
     }
 
 
@@ -228,7 +264,7 @@ function s_db($table, &$v1, $v2=false) {
     if ($action === false) {
         // 按主键返回数据
         if (s_bad_id($v1)) {
-            return s_log_arg();
+            return s_err_arg();
         }
 
         $ret = s_db_primary($table, $v1);
@@ -256,7 +292,7 @@ function s_db_primary($table, $id) {
     if (s_bad_string($table)
         || s_bad_id($id)
     ) {
-        return s_log_arg();
+        return s_err_arg();
     }
 
     $prefix = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
@@ -345,7 +381,7 @@ function _s_db_insert($table, &$data) {
     if (s_bad_string($table)
         || s_bad_array($data)
     ) {
-        return s_log_arg();
+        return s_err_arg();
     }
 
     if (isset($data["id"])) {
@@ -411,7 +447,7 @@ function _s_db_update($table, &$v1, &$v2) {
         //没有指定主键，更新失败
         || s_bad_id($v1["id"], $pid)
     ) {
-        return s_log_arg("no primary key. ex: \$var\['id']");
+        return s_err_arg("no primary key. ex: \$var\['id']");
     }
 
     if (isset($v2["id"])) {
@@ -446,7 +482,7 @@ function _s_db_delete($table, $v1) {
         || !( $v1 = ( is_array($v1) && isset($v1["id"]) ) ? intval($v1["id"]) : $v1 )
         || s_bad_id($v1)
     ) {
-        return s_log_arg();
+        return s_err_arg();
     }
 
 
