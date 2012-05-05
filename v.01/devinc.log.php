@@ -38,14 +38,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-$log_file       = "/var/log/nginx/php.log";     //日志文件
+//$log_file       = "/var/log/nginx/php.log";     //日志文件
 $log_on	        = true;                         //是否开启日志输出（默认开启）
 $log_is_cli     = php_sapi_name() === "cli";    //是否在cli模式下运行
 
 
 //所有的错误信息都将提交到此，待cgi执行完成时再处理错误信息
-static $_traces   = array();
-static $traces_action  = false;
+static $_traces = array();
 
 
 //
@@ -105,12 +104,12 @@ function s_error($log="error, stop it!") {
     exit(E_ERROR);
 }
 
+//将各种debug_traceback转换成字符串
 function s_log_trace(&$trace, &$msg=false) {
     if (!is_array($trace)) {
         return false;
     }
 
-    //s_err_sql("no such table");
     $msg  = $msg ? ' =>' . $msg : '';
 
     $args = array();
@@ -123,12 +122,12 @@ function s_log_trace(&$trace, &$msg=false) {
     }
 
     //将debug_traceback转换成字符串
-    return sprintf("[%s] LOG:%s [%d]:%s(%s) %s", date('m-d H:i:s', s_action_time()), $trace['file'], $trace['line'], $trace['function'], implode(', ', $args), $msg);
+    return sprintf("[%s][LOG]:%s [%d]:%s(%s) %s", date('m-d H:i:s', s_action_time()), $trace['file'], $trace['line'], $trace['function'], implode(', ', $args), $msg);
 }
 
 
 //自定义日志输出函数
-function s_log_hander(&$no=0, &$log=false, &$file=false, &$line=0, &$context=false) {
+function s_log_printf() {
     global $_traces;
 
     $log = "";
@@ -152,4 +151,12 @@ function s_log_hander(&$no=0, &$log=false, &$file=false, &$line=0, &$context=fal
 }
 
 
-register_shutdown_function('s_log_hander');
+//系统调用
+function s_error_handler(&$no=0, &$log=false, &$file=false, &$line=0, &$context=false) {
+    echo "system:{$no}";
+    return s_log('ERR:' . $log);
+}
+
+//TODO: 系统调用并未发生
+set_error_handler('s_error_handler');
+register_shutdown_function('s_log_printf');
