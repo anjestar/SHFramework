@@ -93,3 +93,4 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
 
     return $data;
 }
+

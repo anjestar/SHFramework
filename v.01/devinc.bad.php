@@ -234,3 +234,4 @@ function s_bad_get($key, &$var=false, $type="string") {
     return true;
 }
 
+

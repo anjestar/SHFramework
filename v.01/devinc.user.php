@@ -269,3 +269,4 @@ function s_user_follow($fuid) {
     //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
     return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
 }
+

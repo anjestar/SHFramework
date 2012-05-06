@@ -13,7 +13,7 @@
 
 
 //返回分页对象
-function get_pagebar_detail($current, $total, $count=20, $gap=5) {
+function s_pagebar_detail($current, $total, $count=20, $gap=5) {
     if (s_bad_id($current, $cuttent)
         || s_bad_id($total, $total)
         || s_bad_id($count, $count)
@@ -63,4 +63,5 @@ function get_pagebar_detail($current, $total, $count=20, $gap=5) {
         "next"      => ( $current + 1 ) > $max ? $max : $current + 1,
     );
 }
+
 

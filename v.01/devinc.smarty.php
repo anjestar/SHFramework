@@ -66,3 +66,4 @@ function s_smarty_tpl($tpl) {
         return s_log($se->getMessage());
     }
 }
+
