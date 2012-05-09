@@ -2,7 +2,7 @@
 
 define('FRAMEWORK_DIR', dirname(__FILE__));
 
-define('FRAMEWORK_DBPREFIX', 'sinash');
+define('FRAMEWORK_DBPREFIX', 'sinash_framework');
 
 
 require_once(FRAMEWORK_DIR . '/devinc.bad.php');

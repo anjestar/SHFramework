@@ -22,8 +22,10 @@ define("FRAMEWORK_BINGO_STATUS", 0);
 define("FRAMEWORK_BINGO_NO", 1);
 //已中奖标志
 define("FRAMEWORK_BINGO_YES", 2);
+//已填写用户资料
+define("FRAMEWORK_BINGO_DONE", 98);
 //重复中奖标志
-define("FRAMEWORK_BINGO_REPEAT", 2);
+define("FRAMEWORK_BINGO_REPEAT", 99);
 
 
 function s_bingo_list_by_page($page) {
@@ -69,7 +71,7 @@ function s_bingo_odds(&$config) {
         $config['odds'] = 25;
     }
 
-    return rand(1, $config['odds']) == $config['odds'];
+    return rand(1, $config['odds']) == 1;
 }
 
 
@@ -90,8 +92,8 @@ function s_bingo_go_by_user(&$user) {
 
 
     //查看当天或者以前是否有奖可拿
-    $sql = sprintf("select * from `%s_bingo` where `key`='%s' and `status`=%d and `time`<=%d", 
-        FRAMEWORK_DBPREFIX, $conf['key'], FRAMEWORK_BINGO_STATUS, strtotime("today"));
+    $sql = sprintf("select * from `%s_bingo` where `key`='%s' and `status`<=%d and `time`<=%d", 
+        FRAMEWORK_DBPREFIX, $conf['key'], FRAMEWORK_BINGO_NO, strtotime("today"));
 
     if (s_bingo_odds($config)
         && false !== ( $bingo = s_db_row($sql) )
@@ -126,7 +128,7 @@ function s_bingo_go_by_user_page(&$user, &$page) {
         if (( $bingo = s_db_row(sprintf("select * from `%s_bingo` where `key`='%s' and `uid`='%d' and `page`='%s' and `status`=%d limit 1", 
             FRAMEWORK_DBPREFIX, $conf['key'], $user['id'], $page, FRAMEWORK_BINGO_YES))) ) {
             //已中奖
-            $bingo['status'] = 
+            $bingo['status'] = FRAMEWORK_BINGO_REPEAT;
 
             return $bingo;
         }
@@ -161,4 +163,42 @@ function s_bingo_go_by_user_page(&$user, &$page) {
 
     //未中奖
     return false;
+}
+
+
+//更新用户资料
+function s_bingo_done($bid, $info) {
+    if (s_bad_id($bid)
+        || s_bad_array($info)
+
+        //查看是否有记录
+        || false === ( $v1 = s_db_row(sprintf("select * from `%s_bingo` where `id`=%d limit 1", FRAMEWORK_DBPREFIX, $bid)) )
+    ) {
+        return s_err_arg();
+    }
+
+    $v2 = array();
+
+    if (!s_bad_string($info['address'], $address)) {
+        $v2['address'] = $address;
+    }
+
+    if (!s_bad_string($info['postcode'], $postcode)) {
+        $v2['postcode'] = $postcode;
+    }
+
+    if (!s_bad_string($info['tel'], $tel)) {
+        $v2['tel'] = $tel;
+    }
+
+    if (!count($v2)) {
+        //无需要的数据
+        return s_err_arg();
+    }
+
+    $v2['status'] = FRAMEWORK_BINGO_DONE;
+
+    $table = sprintf("%s_bingo", FRAMEWORK_DBPREFIX);
+
+    return s_db($table, $v1, $v2);
 }

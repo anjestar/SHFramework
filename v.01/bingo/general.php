@@ -1,11 +1,17 @@
 <?php
 
-require_once('devinc.common.php');
+require_once('../devinc.common.php');
+require_once(FRAMEWORK_DIR . '/bingo/devinc.bingo.php');
 
 date_default_timezone_set("Asia/Shanghai");
 
+$user['id'] = 1;
+$user['screen_name'] = 'duanyong';
+
+$_POST['confirm'] = 1;
+
 //得到参数
-if (s_bad_post("key", $key)) {
+if (s_bad_post("key", $akey)) {
     //应用的key
     return s_action_json(array(
         "error"     => 1,
@@ -32,7 +38,7 @@ if (s_bad_post('start', $start)) {
 }
 
 
-if (s_bad_post('end', $end)) {
+if (s_bad_post('stop', $stop)) {
     //应用启止日期
     return s_action_json(array(
         "error"     => 1,
@@ -41,7 +47,7 @@ if (s_bad_post('end', $end)) {
 }
 
 
-if (s_bad_post('even', $even, 'int0')) {
+if (s_bad_post('odds', $odds, 'int0')) {
     //是否平均分布
     return s_action_json(array(
         "error"     => 1,
@@ -73,31 +79,32 @@ if (s_bad_post('nums', $nums, 'array')) {
 
 
 //检查启止日期是否正确
-$time = strtotime($start);
-if ($time1 !== date('Y-m-d', strtotime($start))
-    || $time2 !== date('Y-m-d', strtotime($end))
+if ($start !== date('Y-m-d', ( $time1 = strtotime($start) ))
+    || $stop !== date('Y-m-d', ( $time2 = strtotime($stop) ))
     || $time2 < $time1
 ) {
     $params["error"]    = 2;
-    $params["errmsg"]   = "启止日期({$start}, {$end})不正确，请重新检查，例:2012-05-04";
+    $params["errmsg"]   = "启止日期({$start}, {$stop})不正确，请重新检查，例:2012-05-04";
 }
 
 
 //key是数据库中是否存在
-$sql = sprintf("select count(*) from %s_bingo_config where `key`='%s' limit 1", FRAMEWORK_DBPREFIX, $key);
+$sql = sprintf("select count(*) from %s_bingo_config where `key`='%s' limit 1", FRAMEWORK_DBPREFIX, $akey);
 
-if (s_db_one($sql)) {
+if (s_db_one($sql) >= 1) {
     //key已经在中奖系统中存在
     $params['error']  = 2;
-    $params['errmsg'] = "活动key({$key})已经在中奖系统中存在，不能重复添加";
+    $params['errmsg'] = "活动key({$akey})已经在中奖系统中存在，不能重复添加";
 }
 
 
 //检查奖品名单与数量是否对应
-$pos = 0;
+$pos = count($items);
 
-while ($items[$pos]) {
-    if (!$nums[$pos]) {
+while (( -- $pos ) >= 0
+    && isset($items[$pos])
+) {
+    if (!isset($nums[$pos])) {
         //在名单对应的位置上并没有数量，需要提示
         $params['error']  = 3;
         $params['errmsg'] = "奖品名单对应的下标({$pos}=>{$items[$pos]})并没有奖品数量与其对应";
@@ -106,25 +113,22 @@ while ($items[$pos]) {
     }
 }
 
-$time1   = strtotime("+1 day", strtotime($start)) -1;
-$time2   = strtotime("+1 day", strtotime($end)) -1;
+
+$time1   = strtotime("+1 day", $time1) -1;
+$time2   = strtotime("+1 day", $time2) -1;
 
 $daytime = 24 * 3600;
-$days    = ( $time2 - $time1 ) / $daytime;
+$days    = ( $time2 - $time1 ) / $daytime + 1;
 
-
-$pos    = 0;
+$pos    = count($items);
 $sum    = 0;
 $names  = array();
 
 //得到奖品总数
-while (( $name = $items[$pos] )
+while ( ( -- $pos ) >= 0
+    && ( $name = $items[$pos] )
     && ( $num = $nums[$pos] )
 ) {
-    if ($num == 0) {
-        break;
-    }
-
     $sum += intval($num);
 
     //产生新的数组，用md5值来产生中奖key
@@ -140,11 +144,11 @@ $avg = floor($sum / $days);
 
 if (s_bad_post('confirm', $confirm, 'int')) {
 
-    $params['key']      = $key;
+    $params['key']      = $akey;
     $params['name']     = $name;
     $params['start']    = $start;
-    $params['end']      = $end;
-    $params['even']     = $even;
+    $params['stop']     = $stop;
+    $params['odds']     = $odds;
     $params['items']    = $items;
     $params['nums']     = $nums;
 
@@ -155,6 +159,24 @@ if (s_bad_post('confirm', $confirm, 'int')) {
     return s_action_json($params);
 }
 
+
+//将配置信息存储起来
+$data = array(
+    'name'  => $name,
+    'key'   => $akey,
+    'start' => $start,
+    'stop'  => $stop,
+    'odds'  => $odds,
+    'uid'   => $user['id'],
+    'uname' => $user['screen_name'],
+    'sum'   => $sum,
+    'fdate' => date('Y-m-d'),
+    'ftime' => date('Y-m-d H:i:s'),
+);
+//$sql = sprintf("insert into `%s_bingo_config (`name`, `key`, `start`, `stop`, `odds`, `uid`, `uname`, `sum`, `fdate`, `ftime`) values('%s', '%s', %s, '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s')`;", 
+    //FRAMEWORK_DBPREFIX, $name, $akey, $start, $stop, $odds, $user['id'], $user['screen_name'], $sum, date('Y-m-d'), date('Y-m-d H:i:s'));
+
+$cid = s_db(sprintf("%s_bingo_config:insert", FRAMEWORK_DBPREFIX), $data);
 
 
 //产生sum个优惠码
@@ -181,13 +203,13 @@ $html  = "";
 
 for ($i=0, $len=count($codes); $i<$len; ++$i) {
     $time = $time1 + intval($i / $avg) * $daytime;
-    $key  = $codes[$i];
-    $name = $names[$key]['name'];
+    $code = $codes[$i];
+    $name = $names[$code]['name'];
 
-    $html .= sprintf("\ninsert into `%s_bingo_detail (`key`, `date`, `code`, `name`, `status`) values('%s', %d, '%s', '%s')`;", 
-        APP_BINGO_KEY, $time, $key, $name, FRAMEWORK_BINGO_STATUS);
+    $html .= sprintf("\ninsert into `%s_bingo_detail` (`key`, `date`, `code`, `name`, `status`) values('%s', '%s', '%s', '%s', '%s');", 
+        FRAMEWORK_DBPREFIX, $akey, $time, $code, $name, FRAMEWORK_BINGO_STATUS);
 }
 
-echo "#name:{$name} key:{$key} start:{$start} stop:{$end} count:{$len} avg:{$age}#\n";
+echo "#name:{$name} key:{$akey} start:{$start} stop:{$stop} count:{$len} avg:{$avg}#\n";
 echo $html;
 
