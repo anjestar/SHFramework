@@ -93,7 +93,7 @@ function s_bingo_go_by_user(&$user) {
 
     //查看当天或者以前是否有奖可拿
     $sql = sprintf("select * from `%s_bingo` where `key`='%s' and `status`<=%d and `time`<=%d", 
-        FRAMEWORK_DBPREFIX, $conf['key'], FRAMEWORK_BINGO_NO, strtotime("today"));
+        FRAMEWORK_DBPREFIX, $conf['key'], FRAMEWORK_BINGO_NO, strtotime("tomorrow") -1);
 
     if (s_bingo_odds($config)
         && false !== ( $bingo = s_db_row($sql) )
@@ -137,7 +137,7 @@ function s_bingo_go_by_user_page(&$user, &$page) {
 
     //查看当天或者当天前是否有奖可拿
     $sql = sprintf("select * from `%s_bingo` where `key`='%s' and `page`='%s' and `time`<=%d and `status`=%d limit 1", 
-        FRAMEWORK_DBPREFIX, $conf['key'], $page, strtotime("today"), FRAMEWORK_BINGO_STATUS);
+        FRAMEWORK_DBPREFIX, $conf['key'], $page, strtotime("tomorrow") - , FRAMEWORK_BINGO_STATUS);
 
     if (s_bingo_odds($config)
         && false !== ( $bingo = s_db_row($sql) )
