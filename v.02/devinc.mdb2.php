@@ -109,18 +109,21 @@ function s_db_close(&$dbh) {
 
 
 //获取列表数据（不从memcache缓存中获取数据）
-function s_db_list($sql, $prefix=true) {
+function s_db_list($sql) {
     if (s_bad_string($sql)
         || (false === ( $db = s_db_slink() ))
     ) {
         return false;
     }
 
-    if ($prefix === true) {
-        $sql = _s_db_prefix($sql);
+    if (defined("APP_DB_PREFIX")
+        && ( $count = substr_count($sql, '%s_') )
+    ) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
     }
 
-    $ret = $db->queryAll(_s_db_prefix($sql));
+    $ret = $db->queryAll($sql);
 
     s_db_close($db);
 
@@ -142,10 +145,12 @@ function s_db_row($sql) {
         return false;
     }
 
-    if ($prefix === true) {
-        $sql = _s_db_prefix($sql);
+    if (defined("APP_DB_PREFIX")
+        && ( $count = substr_count($sql, '%s_') )
+    ) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
     }
-
 
     $ret = $db->queryRow($sql);
     s_db_close($db);
@@ -169,8 +174,12 @@ function s_db_one($sql, $prefix=true) {
         return false;
     }
 
-    if ($prefix === true) {
-        $sql = _s_db_prefix($sql);
+
+    if (defined("APP_DB_PREFIX")
+        && ( $count = substr_count($sql, '%s_') )
+    ) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
     }
 
 
@@ -194,6 +203,13 @@ function s_db_exec($sql) {
         || (false === ( $db = s_db_plink() ))
     ) {
         return false;
+    }
+
+    if (defined("APP_DB_PREFIX")
+        && ( $count = substr_count($sql, '%s_') )
+    ) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
     }
 
     $ret = $db->exec($sql);
@@ -248,6 +264,11 @@ function s_db($table, &$v1, $v2=false) {
     }
 
 
+    if (defined("APP_DB_PREFIX")) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $table = sprintf($table, APP_DB_PREFIX, true);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // s_db("user", uid)
     // s_db("user:insert", array("id" => 1, "name" => "张三"))
@@ -295,84 +316,14 @@ function s_db_primary($table, $id) {
         return s_err_arg();
     }
 
-    $prefix = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
-    $sql    = "select * from `{$prefix}{$table}` where `id`={$id} limit 1";
+    if (defined("APP_DB_PREFIX")) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $table = sprintf($table, APP_DB_PREFIX, true);
+    }
+
+    $sql = "select * from `{$table}` where `id`={$id} limit 1";
 
     return s_db_row($sql);
-}
-
-
-//添加sql语句中的表前缀
-function _s_db_prefix($sql) {
-    if (!defined("APP_DB_PREFIX")) {
-        //没有定义表前缀
-        return $sql;
-    }
-
-    $sql = trim($sql);
-    $sql = explode(" from ", $sql);
-
-    if (( $times = count($sql) - 1 ) >= 1) {
-        do {
-            $str = $sql[$times];
-            $pos = strpos($str, ' ');
-            if ($pos !== false) {
-                $str = substr($str, 0, $pos);
-            }
-
-            $str = str_replace('`', '', $str);
-            $p1  = strpos($str, '_');
-
-            if ($p1 !== false
-                && APP_DB_PREFIX === substr($str, 0, $p1)
-            ) {
-                //已经有前缀，不再处理
-                continue;
-            }
-
-            //组合成新的from '`APP_DB_PREFIX_user`'
-            $p1 = $sql[$times];
-            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`'
-                . ( $pos !== false ? substr($p1, $pos) : "" );
-
-        } while (( -- $times ) > 0);
-
-        $sql = implode(' from ', $sql);
-    }
-
-    if (strpos($sql, 'update ') !== false) {
-        //update语句
-        $sql = explode('update ', $sql);
-        $times = count($sql) - 1;
-
-        do {
-            $str = $sql[$times];
-            $pos = strpos($str, ' ');
-            if ($pos !== false) {
-                $str = substr($str, 0, $pos);
-            }
-
-            $str = str_replace('`', '', $str);
-            $p1  = strpos($str, '_');
-
-            if ($p1 !== false
-                && APP_DB_PREFIX === substr($str, 0, $p1)
-            ) {
-                //已经有前缀，不再处理
-                continue;
-            }
-
-            //组合成新的from '`APP_DB_PREFIX_user`'
-            $p1 = $sql[$times];
-            $sql[$times] = '`' . APP_DB_PREFIX . '_' . $str . '`';
-            $sql[$times] .= ( $pos === false ? '' : substr($p1, $pos) );
-
-        } while (( -- $times ) > 0);
-
-        $sql = implode('update ', $sql);
-    }
-
-    return $sql;
 }
 
 
@@ -389,14 +340,18 @@ function _s_db_insert($table, &$data) {
         unset($data["id"]);
     }
 
+    if (defined("APP_DB_PREFIX")) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $table = sprintf($table, APP_DB_PREFIX, true);
+    }
+
 
     // 除去重复的值
     $data = array_unique($data);
-    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
 
     // 将$data中的字段折出来(`name`, `age`, `sex`, `account`)
     $arr = array();
-    $sql = "insert into `{$prev}{$table}`";
+    $sql = "insert into `{$table}`";
 
     foreach (array_keys($data) as $key) {
         $arr[] = $key;
@@ -447,7 +402,12 @@ function _s_db_update($table, &$v1, &$v2) {
         //没有指定主键，更新失败
         || s_bad_id($v1["id"], $pid)
     ) {
-        return s_err_arg("no primary key. ex: \$var\['id']");
+        return s_err_arg("no primary key.");
+    }
+
+    if (defined("APP_DB_PREFIX")) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $table = sprintf($table, APP_DB_PREFIX, true);
     }
 
     if (isset($v2["id"])) {
@@ -468,8 +428,7 @@ function _s_db_update($table, &$v1, &$v2) {
         $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_string_safe($value) . '"' : $value );
     }
 
-    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
-    $sql  = "update `{$prev}{$table}` set " . implode(", ", $values) . " where `id`={$pid}";
+    $sql  = "update `{$table}` set " . implode(", ", $values) . " where `id`={$pid}";
 
     return s_db_exec($sql);
 }
@@ -486,8 +445,11 @@ function _s_db_delete($table, $v1) {
     }
 
 
-    $prev = defined("APP_DB_PREFIX") ? APP_DB_PREFIX . "_" : "";
-    $sql  = "update `{$prev}{$table}` set `status`=-1 where `id`= {$v1}";
+    if (defined("APP_DB_PREFIX")) {
+        //替换表名:"%s_user:update" => "201204disney_user:update"
+        $table = sprintf($table, APP_DB_PREFIX, true);
+    }
+    $sql  = "update `{$table}` set `status`=-1 where `id`= {$v1}";
 
     return s_db_exec($sql);
 }

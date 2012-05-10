@@ -51,7 +51,7 @@ static $_traces = array();
 ////////////////////////////////////////////////////////////////////////////////
 
 
-error_reporting(E_ALL);
+error_reporting(E_ALL & ~E_DEPRECATED);
 
 //ini_set('display_errors', 'Off');
 
@@ -158,6 +158,6 @@ function s_error_handler(&$no=0, &$log=false, &$file=false, &$line=0, &$context=
 }
 
 //TODO: 系统调用并未发生
-set_error_handler('s_error_handler');
+//set_error_handler('s_error_handler');
 register_shutdown_function('s_log_printf');
 

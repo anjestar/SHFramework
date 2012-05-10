@@ -166,6 +166,14 @@ function s_bad_post($key, &$var=false, $type="string") {
         //整型
         return s_bad_id($_POST[$key], $var);
 
+    } else if ($type === "int0") {
+        //整型，可以为0
+        return s_bad_0id($_POST[$key], $var);
+
+    } else if ($type === "array") {
+        //数组
+        return s_bad_array($_POST[$key], $var);
+
     } else if ($type === "email") {
         //邮箱
         return s_bad_email($_POST[$key], $var);
@@ -215,6 +223,9 @@ function s_bad_get($key, &$var=false, $type="string") {
     } else if ($type === "int") {
         //整型
         return s_bad_id($_GET[$key], $var);
+
+    } else if ($type === "int0") {
+        return s_bad_0id($_GET[$key], $var);
 
     } else if ($type === "email") {
         //邮箱
