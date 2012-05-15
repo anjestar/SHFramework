@@ -19,11 +19,13 @@
 //  s_bad_email($email, $var)
 //	    判断邮箱地址是否正确
 //
-//  s_bad_int($key, $var=false, $method="post")
-//      判断POST中的$key是否为正确（$method可以为post或get）
+//  s_bad_post($key, $var=false, $type="string")
+//      判断POST中的$key是否正确
+//          $type为: string, int, int0, array, email, phone(包含mobile和telphone), mobile, telphone, image
 //
-//  s_bad_int($key, $var=false, $method="post")
-//    判断POST中的$key是否为正确（$method可以为post或get）
+//  s_bad_get($key, $var=false, $method="string")
+//    判断GET中的$key是否正确
+//          $type为: string, int, int0, array, email, phone(包含mobile和telphone), mobile, telphone, image
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -246,3 +248,6 @@ function s_bad_get($key, &$var=false, $type="string") {
 }
 
 
+function s_bad_gd() {
+    return extension_loaded('gd') === false;
+}

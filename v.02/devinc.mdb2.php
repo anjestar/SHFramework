@@ -1,49 +1,49 @@
 <?php
 ////////////////////////////////////////////////////////////////////////////////
 //
-// devinc.mbd2.php
-//	将mdb2的操作封装起来。此文件实现了读写分离操作，调用者不用关心主从数据库。
+//  devinc.mbd2.php
+//      将mdb2的操作封装起来。此文件实现了读写分离操作，调用者不用关心主从数据库。
 //
 //
-//	s_db_plink()
-//	    返回主数据库链接（写操作）
+//  s_db_plink()
+//    返回主数据库链接（写操作）
 //  
-//	s_db_slink()
-//	    返回从数据库链接（读操作）
+//  s_db_slink()
+//    返回从数据库链接（读操作）
 //  
-//	s_db_close($db)
-//	    关闭数据库链接
+//  s_db_close($db)
+//    关闭数据库链接
 //
-//	s_db_list($sql, $prefix=true)
-//      返回列表数据，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
+//  s_db_list($sql)
+//      返回列表数据（不从memcache缓存中获取数据）
+//          $sql: select * from `%s_users` limit 100;
 //
-//  s_db_row($sql, $prefix=true)
-//      返回某行数据，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
+//  s_db_row($sql)
+//      返回某行数据（不从memcache缓存中获取数据）
+//          $sql: select * from `%s_users`;
 //
-//  s_db_one($sql, $prefix=true)
-//      返回某个字段值，如果表名没有前缀会添加前缀（不从memcache缓存中获取数据）
+//  s_db_one($sql)
+//      返回某个字段值（不从memcache缓存中获取数据）
+//          $sql: select `id` from `%s_users`;
 //
 //  s_db_exec($sql)
-//      执行sql语句（update或insert）
+//      执行sql语句（update或insert，可以用%s_user:insert/update'代替）
 //
 //  s_db($action, $v1, $v2)
-//      对数据操作（最常用语句），如有APP_DB_PREFIX常量，自动添加到表名前
+//      对数据操作（最常用语句），如有APP_DB_PREFIX常量，自动替换到表名前
 //      1、插入数据
-//          s_db("user:insert", array("uid" => 1, "name" => "duanyong"))
+//          s_db("%s_user:insert", array("uid" => 1, "name" => "duanyong"))
 //
 //      2、更新数据
-//          s_db("user:update", array("id" => 1), array("uid" => 1, "name" => "duanyong"))
+//          s_db("%s_user:update", array("id" => 1), array("uid" => 1, "name" => "duanyong"))
 //
 //      3、删除数据 XXX 慎用：除非表结构中status字段且可取负值 XXX
-//          s_db("user:delete", array("id" => 1))   //数组参数，指定表主键与值
-//          s_db("user:delete", 1)                  //数字参数，自动对应表主键
+//          s_db("%s_user:delete", array("id" => 1))   //数组参数，指定表主键与值
+//          s_db("%s_user:delete", 1)                  //数字参数，自动对应表主键
 //
 //  s_db_primary($sql, $id)
 //      返回表主键对应的数据
 //
-//  s_db_where($table, $where)
-//      根据条件数组返回列表数据
-//          s_db_where("user", array("`name`='duanyong'", "`age`>=24" "limit" => "0, 3", "order"=> "`uid` desc, `age` asc"))
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -270,10 +270,10 @@ function s_db($table, &$v1, $v2=false) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // s_db("user", uid)
-    // s_db("user:insert", array("id" => 1, "name" => "张三"))
-    // s_db("user:update", array("id" => 1, "name" => "张三"), array("name" => "duanyong"))
-    // s_db("user:delete", id)
+    // s_db("%_user", uid)
+    // s_db("%_user:insert", array("id" => 1, "name" => "张三"))
+    // s_db("%_user:update", array("id" => 1, "name" => "张三"), array("name" => "duanyong"))
+    // s_db("%_user:delete", id)
 
     // 对table分拆，得出表名和需要操作的类型
     $pos    = strrpos($table, ":");
