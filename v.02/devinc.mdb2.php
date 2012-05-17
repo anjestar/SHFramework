@@ -120,8 +120,9 @@ function s_db_list($sql) {
         && ( $count = substr_count($sql, '%s_') )
     ) {
         //替换表名:"%s_user:update" => "201204disney_user:update"
-        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
+        $sql = str_replace('%s_', APP_DB_PREFIX . '_', $sql, $count);
     }
+
 
     $ret = $db->queryAll($sql);
 
@@ -149,7 +150,7 @@ function s_db_row($sql) {
         && ( $count = substr_count($sql, '%s_') )
     ) {
         //替换表名:"%s_user:update" => "201204disney_user:update"
-        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
+        $sql = str_replace('%s_', APP_DB_PREFIX . '_', $sql, $count);
     }
 
     $ret = $db->queryRow($sql);
@@ -179,7 +180,7 @@ function s_db_one($sql, $prefix=true) {
         && ( $count = substr_count($sql, '%s_') )
     ) {
         //替换表名:"%s_user:update" => "201204disney_user:update"
-        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
+        $sql = str_replace('%s_', APP_DB_PREFIX . '_', $sql, $count);
     }
 
 
@@ -209,7 +210,7 @@ function s_db_exec($sql) {
         && ( $count = substr_count($sql, '%s_') )
     ) {
         //替换表名:"%s_user:update" => "201204disney_user:update"
-        $sql = str_replace($table, '%s_', APP_DB_PREFIX, $count);
+        $sql = str_replace('%s_', APP_DB_PREFIX . '_', $sql, $count);
     }
 
     $ret = $db->exec($sql);
