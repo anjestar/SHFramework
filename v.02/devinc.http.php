@@ -85,16 +85,15 @@ function s_http_response($url, &$params=false, $method="get") {
             //简单数据提交
             _s_http_post2($curl, $params);
         }
-
-
-        //加载URL
-        curl_setopt($curl, CURLOPT_URL, $url);
-        $ret = curl_exec($curl);
-
-        curl_close($curl);
-
-        return $ret;
     }
+
+    //加载URL
+    curl_setopt($curl, CURLOPT_URL, $url);
+    $ret = curl_exec($curl);
+
+    curl_close($curl);
+
+    return $ret;
 }
 
 
