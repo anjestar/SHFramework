@@ -12,6 +12,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+function s_weibo_ago($time) {
+    if (s_bad_id($time)) {
+        $time = s_action_time();
+    }
+
+    $second = s_action_time() - $time;
+
+	if (( $diff = intval($second / ( 60 * 60 * 24) > 0) )) {
+        return $diff . "天前";
+
+    } else if (( $diff = intval($second / 60 *60 > 0) )) {
+        return $diff . "小时前";
+
+    } else if (( $diff = intval($second / 60 > 0) )) {
+        return $diff . "几钟前";
+	}
+
+	return "刚刚发表";
+}
+
 //返回以json格式的weibo数据，此处为做error_code检查
 function s_weibo_http($url, &$params=false, $method="get") {
     if (false === $params) {
@@ -47,13 +67,14 @@ function s_weibo_http($url, &$params=false, $method="get") {
         $params["_name"] = "image";
         $params["_data"] = file_get_contents(substr($params["image"], 1));
 
-        unset($params["_image"]);
+        unset($params["image"]);
     }
 
 
     if (false === ( $data = s_http_json($url, $params, $method) )
-        || isset($data["error_code"])
+        || isset($data['error_code'])
     ) {
+        //return s_err_action($data['error'] . '=>' . $data['error_code']);
         return false;
     }
 
