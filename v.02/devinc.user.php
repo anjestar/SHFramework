@@ -159,7 +159,6 @@ function s_users_by_uids(&$uids, $encoded=false) {
                 return false;
             }
 
-            //echo "list:", var_dump($list);
             //有可能是空数组
             if (isset($ret["users"])) {
                 $list = array_merge($list, $ret["users"]);
@@ -216,13 +215,26 @@ function s_user_post(&$weibo) {
         return false;
     }
 
+
+    //对图片是否绝对路径
+    if (!s_bad_string($weibo['pic'], $path)) {
+        //以@./相对路径开头
+        if (0 === strpos($path, '@./')) {
+            $weibo['pic'] = $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 2);
+
+        } else if (0 === strpos($path, './')) {
+            $weibo['pic'] =  '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 1);
+        }
+    }
+
     if (isset($weibo["pic"])) {
         //发图片微博
-        $url = "https://api.weibo.com/2/statuses/upload.json";
+        $url = "http://upload.api.weibo.com/2/statuses/upload.json";
 
     } else {
         //发文字微博
-        $url = "http://api.t.sina.com.cn/statuses/update.json";
+        $url = "https://api.weibo.com/2/statuses/update.json";
+
     }
 
     return s_weibo_http($url, $weibo, "post");
@@ -230,7 +242,7 @@ function s_user_post(&$weibo) {
 
 
 //用户回复微博
-function s_user_reply_weibo($weibo) {
+function s_user_reply($weibo) {
     if (s_bad_array($weibo)
         || s_bad_id($weibo["id"])
         || s_bad_string($weibo["comment"])
@@ -257,16 +269,88 @@ function s_user_reply_comment($weibo) {
 
 //用户关注某人
 function s_user_follow($fuid) {
-    if (s_bad_id($fuid)) {
-        return false;
+    $data = array();
+
+    if (!s_bad_id($fuid)) {
+        //微博ID
+        $data['uid'] = $fuid;
+
+    } else if (!s_bad_string($fuid)) {
+        //微博昵称
+        $data['screen_name'] = $fuid;
     }
 
-    $data = array(
-        "uid" => $fuid,
-    );
+    if (s_bad_array($data)) {
+        return s_err_arg();
+    }
 
     //2.0接口返回程序未被授权
     //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
     return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
+    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
+}
+
+
+//用户的粉丝列表
+function s_user_followers($uid, $count=200, $page=1) {
+    if (s_bad_id($count)
+        || s_bad_id($page)
+    ) {
+        return s_err_arg();
+    }
+
+    if (!s_bad_id($uid)) {
+        //微博ID
+        $data['uid'] = $uid;
+
+    } else if (!s_bad_string($uid)) {
+        //微博昵称
+        $data['screen_name'] = $uid;
+    }
+
+    $data['count']  = $count > 5000 ? 200 : $count;
+    //游标从0开始
+    $data['cursor'] = $page - 1;
+
+    if (s_bad_array($data)
+        || false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers/ids.json", $data) )
+        || s_bad_array($ret['ids'], $list)
+    ) {
+        return s_err_arg('call api error');
+    }
+
+    $ret = array();
+
+    foreach ($list as $uid) {
+        if (false !== ( $info = s_user_by_uid($uid) )) {
+            $ret[$uid] = $info;
+        }
+    }
+
+    return $ret;
+}
+
+
+//用户与对方之间的关系
+function s_user_ship($uid) {
+    $data = array();
+
+    if (!s_bad_id($uid)) {
+        //微博ID
+        $data['target_id'] = $uid;
+
+    } else if (!s_bad_string($uid)) {
+        //微博昵称
+        $data['target_screen_name'] = $uid;
+    }
+
+    if (s_bad_array($data)) {
+        return s_err_arg();
+    }
+
+    //2.0接口返回程序未被授权
+    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
+    return s_weibo_http("http://api.t.sina.com.cn/friendships/show.json", $data);
+    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
 }
 
