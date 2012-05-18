@@ -31,11 +31,24 @@ function s_user_by_uid($uid) {
             "uid"   => $uid,
         );
 
-        if (false === ( $user = s_weibo_http("https://api.weibo.com/2/users/show.json", $arr) )) {
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $arr) )) {
             return false;
         }
 
+        //只缓存少数数据：头像、昵称、
+        $user = array();
+        $user['id']         = $ret['id'];
+        $user['name']       = $ret['screen_name'];
+        $user['purl']       = $ret['profile_image_url'];
+        $user['wurl']       = $ret['profile_url'];
+        $user['domain']     = $ret['domain'];
+
+        $user['location']   = $ret['location'];
+        $user['province']   = $ret['province'];
+        $user['city']       = $ret['city'];
+
         //存储memcache中
+        s_memcache($key, $user);
     }
 
 	return $user;
@@ -312,22 +325,25 @@ function s_user_followers($uid, $count=200, $page=1) {
     //游标从0开始
     $data['cursor'] = $page - 1;
 
-    if (s_bad_array($data)
-        || false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers/ids.json", $data) )
-        || s_bad_array($ret['ids'], $list)
+    $key = "user_followers_by_uid#{$uid}_{$count}_{$page}";
+
+    if (false !== ( $users = s_memcache($key) )) {
+        return $users;
+    }
+
+    //缓存中没有，从微博平台中获取
+    if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers.json", $data) )
+        || s_bad_array($ret['users'], $users)
     ) {
-        return s_err_arg('call api error');
+        return false;
     }
 
-    $ret = array();
+    $users = s_user_sample($users);
 
-    foreach ($list as $uid) {
-        if (false !== ( $info = s_user_by_uid($uid) )) {
-            $ret[$uid] = $info;
-        }
-    }
+    //缓存中存储起来
+    s_memcache($key, $users);
 
-    return $ret;
+    return $users;
 }
 
 
@@ -354,3 +370,20 @@ function s_user_ship($uid) {
     //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
 }
 
+
+function s_user_sample(&$user) {
+    if (s_bad_array($user)) {
+        return false;
+    }
+
+    foreach ($uesrs as &$user) {
+        $user['id']         = $ret['id'];
+        $user['name']       = $ret['screen_name'];
+        $user['purl']       = $ret['profile_image_url'];
+        $user['wurl']       = $ret['profile_url'];
+
+        unset($user);
+    }
+
+    return $users;
+}

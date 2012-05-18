@@ -4,6 +4,9 @@
 // devinc.action.php
 //	获取action的相关函数
 //
+//	s_action_user()
+//	    返回服务器请求的时间
+//  
 //	s_action_time()
 //	    返回服务器请求的时间
 //  
@@ -19,6 +22,21 @@
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+
+function s_action_user() {
+    //先从memcache中获取
+    if (false === ( $sso = new SSOCookie('cookie.conf') )
+        || false === ( $cookie = $sso->getCookie() )
+
+        || s_bad_id($cookie['uniqueid'], $uniqueid)
+    ) {
+        return false;
+    }
+
+    //需要从weibo平台中获取用户信息
+    return s_user_by_uid($uniqueid);
+}
 
 
 function s_action_time() {
