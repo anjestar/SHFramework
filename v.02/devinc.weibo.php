@@ -19,14 +19,14 @@ function s_weibo_ago($time) {
 
     $second = s_action_time() - $time;
 
-	if (( $diff = intval($second / ( 60 * 60 * 24) > 0) )) {
+	if (( $diff = intval($second / (60 * 60 * 24) )) > 0 ) {
         return $diff . "天前";
 
-    } else if (( $diff = intval($second / 60 *60 > 0) )) {
+    } else if (( $diff = intval($second / (60 *60) )) > 0) {
         return $diff . "小时前";
 
-    } else if (( $diff = intval($second / 60 > 0) )) {
-        return $diff . "几钟前";
+    } else if (( $diff = intval($second / 60) ) > 0) {
+        return $diff . "分钟前";
 	}
 
 	return "刚刚发表";

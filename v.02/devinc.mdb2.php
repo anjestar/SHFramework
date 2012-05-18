@@ -163,7 +163,7 @@ function s_db_row($sql) {
     }
 
 
-    return $row;
+    return $ret;
 }
 
 

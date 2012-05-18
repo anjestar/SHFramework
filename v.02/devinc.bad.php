@@ -152,7 +152,7 @@ function s_bad_telphone($phone, &$var=false) {
 
 
 //返回post值
-function s_bad_post($key, &$var=false, $type="string") {
+function s_bad_post($key, &$var=false, $type="string", $length=false) {
     if (s_bad_string($key)
         || !isset($_POST[$key])
     ) {
@@ -163,6 +163,7 @@ function s_bad_post($key, &$var=false, $type="string") {
     if ($type === "string") {
         //字符类型
         return s_bad_string($_POST[$key], $var);
+
 
     } else if ($type === "int") {
         //整型

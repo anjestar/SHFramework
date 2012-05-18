@@ -51,7 +51,7 @@ static $_traces = array();
 ////////////////////////////////////////////////////////////////////////////////
 
 
-error_reporting(E_ALL & ~E_DEPRECATED);
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 //ini_set('display_errors', 'Off');
 
@@ -113,7 +113,7 @@ function s_log_trace(&$trace, &$msg=false) {
     $msg  = $msg ? ' =>' . $msg : '';
 
     $args = array();
-    $list = $trace['args'];
+    $list = isset($trace['args']) ? $trace['args'] : array();
 
     foreach ($list as &$arg) {
         $args[] = str_replace("\n", '', print_r($arg, true));
@@ -158,6 +158,6 @@ function s_error_handler(&$no=0, &$log=false, &$file=false, &$line=0, &$context=
 }
 
 //TODO: 系统调用并未发生
-set_error_handler('s_error_handler');
+//set_error_handler('s_error_handler');
 register_shutdown_function('s_log_printf');
 
