@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_action_user() {
+function s_action_user($verify=true) {
     //先从memcache中获取
     if (false === ( $sso = new SSOCookie('cookie.conf') )
         || false === ( $cookie = $sso->getCookie() )
@@ -32,6 +32,10 @@ function s_action_user() {
         || s_bad_id($cookie['uniqueid'], $uniqueid)
     ) {
         return false;
+    }
+
+    if ($verify === false) {
+        return $cookie;
     }
 
     //需要从weibo平台中获取用户信息

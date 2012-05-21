@@ -348,7 +348,7 @@ function _s_db_insert($table, &$data) {
 
 
     // 除去重复的值
-    $data = array_unique($data);
+    //$data = array_unique($data);
 
     // 将$data中的字段折出来(`name`, `age`, `sex`, `account`)
     $arr = array();

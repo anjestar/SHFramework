@@ -100,7 +100,7 @@ function s_user_by_domain($domain) {
 }
 
 
-//批量获取用户信息
+//批量获取用户信息（内部接口，外部禁用）
 function s_users_by_uids(&$uids, $encoded=false) {
     if (!s_bad_array($uids)
         || !( $uids = array_unique($uids) )
@@ -300,7 +300,6 @@ function s_user_follow($fuid) {
     //2.0接口返回程序未被授权
     //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
     return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
-    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
 }
 
 
@@ -333,12 +332,13 @@ function s_user_followers($uid, $count=200, $page=1) {
 
     //缓存中没有，从微博平台中获取
     if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers.json", $data) )
-        || s_bad_array($ret['users'], $users)
+        || s_bad_array($ret['users'])
     ) {
         return false;
     }
 
-    $users = s_user_sample($users);
+
+    $users = s_user_sample($ret['users']);
 
     //缓存中存储起来
     s_memcache($key, $users);
@@ -371,16 +371,16 @@ function s_user_ship($uid) {
 }
 
 
-function s_user_sample(&$user) {
-    if (s_bad_array($user)) {
+function s_user_sample(&$users) {
+    if (s_bad_array($users)) {
         return false;
     }
 
-    foreach ($uesrs as &$user) {
-        $user['id']         = $ret['id'];
-        $user['name']       = $ret['screen_name'];
-        $user['purl']       = $ret['profile_image_url'];
-        $user['wurl']       = $ret['profile_url'];
+    foreach ($users as &$user) {
+        $user['id']         = $user['id'];
+        $user['name']       = $user['screen_name'];
+        $user['purl']       = $user['profile_image_url'];
+        $user['wurl']       = $user['profile_url'];
 
         unset($user);
     }

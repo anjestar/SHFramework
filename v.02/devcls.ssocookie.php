@@ -39,7 +39,8 @@ class SSOCookie {
 		parse_str($_COOKIE[self::COOKIE_SUP],$arrSUP);
 		foreach( $arrSUP as $key=>$val) {
 			if(!array_key_exists($key,$this->_arrKeyMap)) $this->_arrKeyMap[$key] = $key;
-			$arrUserInfo[$this->_arrKeyMap[$key]] = iconv("UTF-8","GBk",$val);
+			//$arrUserInfo[$this->_arrKeyMap[$key]] = iconv("UTF-8","GBk",$val);
+			$arrUserInfo[$this->_arrKeyMap[$key]] = $val;
 		}
 		// 判断是否超时
 		if($arrUserInfo['expiredtime'] < time()) {
@@ -56,6 +57,10 @@ class SSOCookie {
 
 		unset($arrUserInfo['cookieversion']);
 
+        //var_dump($arrUserInfo);
+
+        $arrUserInfo['id']          = $arrUserInfo['uniqueid']; 
+        $arrUserInfo['screen_name'] = $arrUserInfo['displayname']; 
 
         return $arrUserInfo;
 	}
