@@ -53,9 +53,18 @@ function s_string_2dir($path, $mask=0755) {
         return false;
     }
 
-    if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
-        $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
+    //检查是否为绝对路径
+    if (substr($path, 0, 1) !== '/') {
+        //非绝对路径自动添加项目前缀
+        if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
+            $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
+        }
+
+    } else {
+        //绝对路径
+        $real = $path;
     }
+
 
     if (!is_dir($real)
         && !mkdir($real, $mask, true)
