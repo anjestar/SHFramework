@@ -80,7 +80,6 @@ function s_weibo_http($url, $params=false, $method="get") {
         $params = array();
     }
 
-
     //添加COOKIE
     $params["cookie"]["SUE"] = $_COOKIE["SUE"];
     $params["cookie"]["SUP"] = $_COOKIE["SUP"];
@@ -88,14 +87,25 @@ function s_weibo_http($url, $params=false, $method="get") {
     //添加APPKEY
     $params["source"] = APP_KEY;
 
-    //上传图片
+    //上传图片。有两种情况
+    //  1、@/image/web.jpg
+    //  2、图片数据
+    //
     if (isset($params["pic"])
         && is_string($params["pic"])
-        && substr($params["pic"], 0, 1) === '@'
     ) {
         //检查数据是二进制文件还是路径
         $params["_name"] = "pic";
-        $params["_data"] = file_get_contents(substr($params["pic"], 1));
+
+        if ( substr($params["pic"], 0, 1) === '@' ) {
+            //@是路径
+            $params["_data"] = file_get_contents(substr($params["pic"], 1));
+
+        } else {
+            //直接使用
+            $params["_data"] = $params["pic"];
+        }
+
 
         unset($params["pic"]);
     }
@@ -103,11 +113,18 @@ function s_weibo_http($url, $params=false, $method="get") {
     //上传头像
     if (isset($params["image"])
         && is_string($params["image"])
-        && substr($params["image"], 0, 1) === '@'
     ) {
         //检查数据是二进制文件还是路径
         $params["_name"] = "image";
-        $params["_data"] = file_get_contents(substr($params["image"], 1));
+
+        if ( substr($params["image"], 0, 1) === '@' ) {
+            //@是路径
+            $params["_data"] = file_get_contents(substr($params["image"], 1));
+
+        } else {
+            //是图片数据
+            $params["_data"] = $params["image"];
+        }
 
         unset($params["image"]);
     }

@@ -63,6 +63,9 @@ function s_action_ip() {
 }
 
 
+function s_action_referer() {
+}
+
 function s_action_error($message="no params.", $code=99, $type="json") {
     $error = array(
         'error'     => $code,

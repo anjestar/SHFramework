@@ -217,6 +217,13 @@ function s_users_by_uids(&$uids, $encoded=false) {
 
 
 //用户发布徽博
+//  $weibo['pic'] 有三种情况：
+//      1、@/var/www/project/images/wb.jpg
+//          不做任何改变
+//      2、@./image/web.jpg
+//          路径被转换成绝对路径
+//      3、由flash上传的图片数据
+//
 function s_user_post(&$weibo) {
     if (is_string($weibo)) {
         $weibo = array(
