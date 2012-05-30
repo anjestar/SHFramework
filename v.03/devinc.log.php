@@ -97,6 +97,10 @@ function s_err_sql($log="warning sql") {
     return s_log('SQL:' . $log);
 }
 
+function s_err_sdk($log="warning sdk") {
+    return s_log('SDK:' . $log);
+}
+
 function s_error($log="error, stop it!") {
     s_log('ERR:' . $log);
 

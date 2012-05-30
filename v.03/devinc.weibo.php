@@ -12,6 +12,48 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+
+function s_weibo_by_wid($wid) {
+    if (s_bad_id($wid)) {
+        return s_err_arg();
+    }
+
+
+    $key = 'weibo_by_wid#' . $wid;
+
+    if (false === ( $data = s_memcache($key) )) {
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', array('id'=>$wid)) )) {
+            return s_err_sdk();
+        }
+
+        //缓存
+        s_memcache($key, $data);
+    }
+
+    return $data;
+}
+
+function s_weibo_list_ago($list) {
+    if (s_bad_array($list)) {
+        return false;
+    }
+
+    foreach ($list as &$item) {
+        if (isset($item['time'])) {
+            $item['ago'] = s_weibo_ago($item['time']);
+        }
+
+        unset($item['fdate']);
+        unset($item['ftime']);
+        unset($item['status']);
+
+        unset($item);
+    }
+
+    return $list;
+}
+
+
 function s_weibo_ago($time) {
     if (s_bad_id($time)) {
         $time = s_action_time();
@@ -33,7 +75,7 @@ function s_weibo_ago($time) {
 }
 
 //返回以json格式的weibo数据，此处为做error_code检查
-function s_weibo_http($url, &$params=false, $method="get") {
+function s_weibo_http($url, $params=false, $method="get") {
     if (false === $params) {
         $params = array();
     }
@@ -74,7 +116,7 @@ function s_weibo_http($url, &$params=false, $method="get") {
     if (false === ( $data = s_http_json($url, $params, $method) )
         || isset($data['error_code'])
     ) {
-        //return s_err_action($data['error'] . '=>' . $data['error_code']);
+        var_dump($data);
         return false;
     }
 

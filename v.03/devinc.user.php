@@ -27,12 +27,8 @@ function s_user_by_uid($uid) {
 	$key = "user_by_uid#" . $uid;
 
     if (false === ( $user = s_memcache($key) )) {
-        $arr = array(
-            "uid"   => $uid,
-        );
-
-        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $arr) )) {
-            return false;
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", array('uid'=>$uid)) )) {
+            return s_err_sdk();
         }
 
         //只缓存少数数据：头像、昵称、
@@ -62,19 +58,25 @@ function s_user_by_nickname($nickname) {
         return false;
     }
 
-    $key = "user_by_nickname#" . $nickname;
+    $key = "uid_by_nickname#" . $nickname;
 
-    if (false === ( $uid = s_memcache_get($key) )) {
+    if (false === ( $uid = s_memcache($key) )) {
         //缓存中不存在，从API获取uid缓存起来
-        $params = array(
+        $arr = array(
             "screen_name"   => $nickname,
         );
 
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $arr) )
+            || s_bad_id($ret['id'], $uid)
+        ) {
+            return false;
+        }
+
         //缓存1小时
-        //$mem->set($key, $uid, 0, 3600);
+        s_memcache($key, $uid);
     }
 
-    return s_user_data_by_uid($uid);
+    return s_user_by_uid($uid);
 }
 
 

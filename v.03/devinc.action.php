@@ -63,6 +63,20 @@ function s_action_ip() {
 }
 
 
+function s_action_error($message="no params.", $code=99, $type="json") {
+    $error = array(
+        'error'     => $code,
+        'errmsg'    => $message,
+    );
+
+    if ($type === 'josn') {
+        s_action_json($error);
+
+    } else if ($type === 'xml') {
+        s_action_xml($error);
+    }
+}
+
 //重定向
 function s_action_redirect($url) {
     if (s_bad_string($url)) {

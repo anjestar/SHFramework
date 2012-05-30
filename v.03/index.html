@@ -8,12 +8,17 @@
 </head>
 <body>
     <div style="text-align: center;">
-        <form action="test.php" method="post">
-            username:<input type="text" name="wname" />
+        <form action="test.php?type=getUserDetail" method="post">
+            根据用户昵称查询用户详情<br />
+            username:<input type="text" name="token" />
 
             <input type="submit" />
+        </form>
+        <form action="test.php?type=getUserDetail" method="post">
+            根据用户主键查询用户详情<br />
+            uid:<input type="text" name="token" />
 
-            <input type="hidden" name="type" value="getWeiboID" />
+            <input type="submit" />
         </form>
     </div>
 </body>
