@@ -58,6 +58,31 @@ function s_action_xml($data) {
 }
 
 
+function s_action_data() {
+    if (s_bad_get('token', $token)
+        || s_bad_string($GLOBALS["HTTP_RAW_POST_DATA"], $data)
+    ) {
+        return false;
+    }
+    
+    $ret = array();
+    $arr = explode($token, $data);
+
+    foreach ($arr as &$item) {
+        if (( $pos = strpos($item, '=') ) === false) {
+            continue;
+        }
+
+        $key = substr($item, 0, $pos);
+        $var = substr($item, $pos + 1);
+
+        $ret[$key] = $var;
+    }
+
+    return $ret;
+}
+
+
 function s_action_ip() {
     return "000.000.000.000";
 }
@@ -72,12 +97,12 @@ function s_action_error($message="no params.", $code=99, $type="json") {
         'errmsg'    => $message,
     );
 
-    if ($type === 'josn') {
+    //if ($type === "josn") {
         s_action_json($error);
 
-    } else if ($type === 'xml') {
-        s_action_xml($error);
-    }
+    //} else if ($type === 'xml') {
+        //s_action_xml($error);
+    //}
 }
 
 //重定向

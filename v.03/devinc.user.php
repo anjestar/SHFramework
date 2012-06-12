@@ -288,6 +288,27 @@ function s_user_reply_comment($weibo) {
     return s_weibo_http("https://api.weibo.com/2/comments/reply.json", $weibo);
 }
 
+//用户更新头像（高级权限）
+function s_user_avatar(&$avatar) {
+    if (s_bad_string($avatar)) {
+        return false;
+    }
+
+    $data = array();
+
+    //以@./相对路径开头
+    if (0 === strpos($avatar, '@./')) {
+        $data['image'] = $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($avatar, 2);
+
+    } else if (0 === strpos($avatar, './')) {
+        $data['image'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($avatar, 1);
+
+    } else {
+        $data['image'] = $avatar;
+    }
+
+    return s_weibo_http('http://i2.api.weibo.com/2/account/avatar/upload.json', $data, 'post');
+}
 
 //用户关注某人
 function s_user_follow($fuid) {
@@ -396,3 +417,4 @@ function s_user_sample(&$users) {
 
     return $users;
 }
+

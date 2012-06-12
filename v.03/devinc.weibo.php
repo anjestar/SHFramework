@@ -54,6 +54,29 @@ function s_weibo_list_ago($list) {
 }
 
 
+function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
+    if (s_bad_array($list)
+        || s_bad_string($format)
+    ) {
+        return false;
+    }
+
+    foreach ($list as &$item) {
+        if (isset($item['time'])) {
+            $item['time'] = date($format . $postfix, $item['time']);
+        }
+
+        unset($item['fdate']);
+        unset($item['ftime']);
+        unset($item['status']);
+
+        unset($item);
+    }
+
+    return $list;
+}
+
+
 function s_weibo_ago($time) {
     if (s_bad_id($time)) {
         $time = s_action_time();
