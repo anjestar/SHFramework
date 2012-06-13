@@ -13,7 +13,7 @@
 
 
 //对memcached操作
-function s_memcache($key, $value=false, $method="set") {
+function s_memcache($key, $value=false, $time=300) {
     return false;
 
     if (s_bad_string($key)) {
@@ -26,7 +26,7 @@ function s_memcache($key, $value=false, $method="set") {
 
     } else if ($method === "set") {
         //设置memcache值
-        return s_memcache_set($key, $value);
+        return s_memcache_set($key, $value, $time);
     }
 
     
@@ -38,7 +38,7 @@ function s_memcache_get($key) {
 }
 
 //设置memcache值
-function s_memcache_set($key, $value) {
+function s_memcache_set($key, $value, $time) {
 }
 
 
