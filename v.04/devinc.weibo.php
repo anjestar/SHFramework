@@ -26,12 +26,13 @@ function s_weibo_by_wid($wid) {
             return s_err_sdk();
         }
 
-        //缓存
-        s_memcache($key, $data);
+        //缓存24小时
+        s_memcache($key, $data, 24 * 3600);
     }
 
     return $data;
 }
+
 
 function s_weibo_list_ago($list) {
     if (s_bad_array($list)) {
@@ -197,3 +198,81 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
     return $data;
 }
 
+function s_weibo_2id_by_mids($mids, $type=1) {
+    $is_array = 0;
+
+    if (is_array($mids)) {
+        sort($mids, SORT_STRING);
+
+        $mids = implode(',', $mids);
+
+        $is_array = 1;
+    }
+
+
+    if (s_bad_string($mids)) {
+        return false;
+    }
+
+
+    //看cache中是否存在
+    $key = "weibo_2id_by_mids#" . $mids;
+
+    if (false === ( $data = s_memcache($key) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            "mid"       => $mids,
+            "type"      => $type,
+            "is_batch"  => $is_array,
+            "isBase62"  => 1,
+        );
+
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/queryid.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来24小时
+        s_memcache($key, $data, 24 * 3600);
+    }
+
+    if (!$is_array) {
+        //非数组查询，只返回对应的id
+        return $data['id'];
+    }
+
+
+    $ret = array();
+
+    //数组需要处理下
+    foreach ($data as &$item) {
+        $ret = array_merge($ret, $item);
+
+        unset($item);
+    }
+
+    unset($data);
+
+    return $ret;
+}
+
+
+//返回微博的详细信息
+function s_weibo_detail_by_mids($mids, $internal=false) {
+    if (s_bad_array($mids)
+
+        //得到所有的id
+        || false == ( $mids = s_weibo_2id_by_mids($mids) )
+    ) {
+        return false;
+    }
+
+    //查询所有的微博详情
+    $list = array();
+
+    foreach ($mids as $key=>$wid) {
+        $list[$key] = s_weibo_by_wid($wid);
+    }
+
+
+    return $list;
+}
