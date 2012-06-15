@@ -49,7 +49,7 @@ function s_live_watch(&$user, $lid) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid' => $user['id'],
+            'uid' => $user['uid'],
             'lid' => $lid,
             'act' => 0,
         );
@@ -84,7 +84,7 @@ function s_live_info(&$user, $lid, $url=false) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'    => $user['id'],
+            'uid'    => $user['uid'],
             'lid'    => $lid,
             'detail' => 1,
         );
@@ -116,7 +116,7 @@ function s_live_info_by_url(&$user, &$url) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'url'    => $user['id'],
+            'url'    => $user['uid'],
         );
 
         if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/live/live/getLiveInfoByUrl.php', $data) )) {
@@ -133,10 +133,10 @@ function s_live_info_by_url(&$user, &$url) {
 
 
 //获取直播内容区微博
-function s_live_content(&$user, $lid, $page=1, $pagesize=20) {
+function s_live_content(&$user, $lid, $page=1, $max=20) {
     if (s_bad_id($lid)
+        || s_bad_id($max)
         || s_bad_id($page)
-        || s_bad_id($pagesize)
 
         || s_bad_array($user)
     ) {
@@ -144,42 +144,23 @@ function s_live_content(&$user, $lid, $page=1, $pagesize=20) {
     }
 
 
-    $key = 'live_content_by_lid#' . $lid;
+    $key = 'live_content_by_lid#' . $lid . $page . $max;
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'       => $user['id'],
+            'uid'       => $user['uid'],
             'lid'       => $lid,
             'page'      => $page,
-            'pagesize'  => $pagesize,
+            'pagesize'  => $max,
         );
 
 
         if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/sapps/live/getlivecontents.php', $data))) {
             return s_err_sdk();
         }
-        echo "set";
 
         //缓存10秒钟
         s_memcache($key, $data, 10);
-    }
-        var_dump($data);
-
-    if (isset($data['result'])
-        && count($data['result'])
-    ) {
-        //有数据
-        $mids = array();
-
-        foreach ($data['result'] as &$item) {
-            $mids[] = $item['mid'];
-
-            unset($item);
-        }
-
-        $data['list'] = s_weibo_detail_by_mids($mids);
-
-        unset($data['result']);
     }
 
 
@@ -201,7 +182,7 @@ function s_live_weibo(&$user, $lid, $page=1) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'       => $user['id'],
+            'uid'       => $user['uid'],
             'liveid'    => $lid,
             'page'      => $page,
             'pagesize'  => 20,
@@ -214,15 +195,15 @@ function s_live_weibo(&$user, $lid, $page=1) {
         //缓存5秒钟
         s_memcache($key, $data, 5);
     }
-    var_dump($$data);
 
     return $data;
 }
 
 
 //获取直播用户提问
-function s_live_ask(&$user, $lid, $page=1) {
+function s_live_question(&$user, $lid, $page=1, $max=10) {
     if (s_bad_id($lid)
+        || s_bad_id($max)
         || s_bad_id($page)
         || s_bad_array($user)
     ) {
@@ -230,15 +211,16 @@ function s_live_ask(&$user, $lid, $page=1) {
     }
 
 
-    $key = 'live_ask_by_#' . $lid;
+    $key = 'live_question_by#' . $lid . $page . $max;
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'       => $user['id'],
+            'uid'       => $user['uid'],
             'lid'       => $lid,
             'page'      => $page,
-            'pagesize'  => 10,
+            'pagesize'  => $max,
         );
+
 
         if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/sapps/live/getquestionlist.php', $data))) {
             return s_err_sdk();
@@ -264,7 +246,7 @@ function s_live_post(&$user, &$mids, $act=0) {
 
 
     $data = array(
-        'uid' => $user['id'],
+        'uid' => $user['uid'],
         'lid' => $lid,
         'mid' => $mids,
         'act' => $act,
@@ -290,7 +272,7 @@ function s_live_user(&$user, $lid) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'       => $user['id'],
+            'uid'       => $user['uid'],
             'lid'       => $lid,
         );
 
@@ -298,8 +280,8 @@ function s_live_user(&$user, $lid) {
             return s_err_sdk();
         }
 
-        //缓存一小时
-        s_memcache($key, $data, 3600);
+        //缓存30分钟
+        s_memcache($key, $data, 300);
     }
 
     return $data;
@@ -307,28 +289,32 @@ function s_live_user(&$user, $lid) {
 
 
 //获取直播列表
-function s_live_now($page=1, $type=1) {
-    if (false === ( $user = s_action_user(false) )) {
+function s_live_now(&$user, $type=1, $page=1, $max=10) {
+    if (s_bad_array($user)
+        || s_bad_id($page)
+        || s_bad_id($type)
+    ) {
         return s_err_arg();
     }
 
 
-    $key = 'live_list_by_lid#' . $lid;
+    $key = 'live_list_by#' . $page . $type . $max;
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
-            'uid'       => $user['id'],
+            'uid'       => $user['uid'],
             'type'      => $type,
             'page'      => $page,
-            'pagesize'  => 10,
+            'pagesize'  => $max,
         );
+
 
         if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/sapps/live/getlivelist.php', $data) )) {
             return s_err_sdk();
         }
 
-        //缓存30秒
-        s_memcache($key, $data, 30);
+        //缓存60秒
+        s_memcache($key, $data, 60);
     }
 
     return $data;

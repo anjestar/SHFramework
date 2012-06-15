@@ -34,6 +34,10 @@ function s_action_user($verify=true) {
         return false;
     }
 
+    //将cookie中的变量换成标准的uid, uname
+    $cookie['uid']   = $cookie['uniqueid'];
+    $cookie['uname'] = $cookie['screen_name'];
+
     if ($verify === false) {
         return $cookie;
     }

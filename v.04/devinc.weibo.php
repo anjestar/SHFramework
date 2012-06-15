@@ -23,7 +23,8 @@ function s_weibo_by_wid($wid) {
 
     if (false === ( $data = s_memcache($key) )) {
         if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', array('id'=>$wid)) )) {
-            return s_err_sdk();
+            //有些微博会被删除，所以不提示
+            return false;
         }
 
         //缓存24小时
@@ -157,7 +158,7 @@ function s_weibo_http($url, $params=false, $method="get") {
     if (false === ( $data = s_http_json($url, $params, $method) )
         || isset($data['error_code'])
     ) {
-        var_dump($data);
+        //var_dump($data);
         return false;
     }
 
@@ -257,11 +258,39 @@ function s_weibo_2id_by_mids($mids, $type=1) {
 
 
 //返回微博的详细信息
-function s_weibo_detail_by_mids($mids, $internal=false) {
-    if (s_bad_array($mids)
+//  $mid 可为简单数组 如 array('YQsdz13', 'YQsdz13', 'YQsdz13', 'YQsdz13', 'YQsdz13', 'YQsdz13')
+//       可为联合数组 如 array(array('mid' => 'YQsdz12'), array('mid' => 'YQsdz12'))
+//       可为mid字符  如 YQsdz13
+//
+function s_weibo_detail_by_mid($mid, $key=false) {
+    if (is_string($mid)) {
+        //查一个
+        $mid = array($mid);
 
+    } else if (is_array($mid)) {
+        //查多个
+        if (is_string($key)) {
+            //是一个联合数组，那么按$key取值
+            $list = $mid;
+
+            $mid = array();
+
+            foreach ($list as $item) {
+                if (!s_bad_string($item[$key], $id)) {
+                    $mid[] = $id;
+                }
+            }
+
+            unset($list);
+        }
+
+
+        $mid = array_unique($mid);
+    }
+
+    if (s_bad_array($mid)
         //得到所有的id
-        || false == ( $mids = s_weibo_2id_by_mids($mids) )
+        || false == ( $mid = s_weibo_2id_by_mids($mid) )
     ) {
         return false;
     }
@@ -269,7 +298,7 @@ function s_weibo_detail_by_mids($mids, $internal=false) {
     //查询所有的微博详情
     $list = array();
 
-    foreach ($mids as $key=>$wid) {
+    foreach ($mid as $key=>$wid) {
         $list[$key] = s_weibo_by_wid($wid);
     }
 
