@@ -62,7 +62,8 @@ function s_live_watch(&$user, $lid) {
         s_memcache($key, $data, 3600);
     }
 
-    return s_live_filter($data);
+    return $data;
+    //return s_live_filter($data);
 }
 
 
@@ -132,7 +133,7 @@ function s_live_info_by_url(&$user, &$url) {
 
 
 
-//获取直播内容区微博
+//获取直播区微博
 function s_live_content(&$user, $lid, $page=1, $max=20) {
     if (s_bad_id($lid)
         || s_bad_id($max)

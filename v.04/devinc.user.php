@@ -246,10 +246,10 @@ function s_user_post(&$weibo) {
     if (!s_bad_string($weibo['pic'], $path)) {
         //以@./相对路径开头
         if (0 === strpos($path, '@./')) {
-            $weibo['pic'] = $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 2);
+            $weibo['pic'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 2);
 
         } else if (0 === strpos($path, './')) {
-            $weibo['pic'] =  '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 1);
+            $weibo['pic'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 1);
         }
     }
 

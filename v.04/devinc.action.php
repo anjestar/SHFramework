@@ -142,3 +142,21 @@ function s_action_redirect($url) {
 }
 
 
+//重定向
+function s_action_page($tpl, $assign) {
+    if (s_bad_string($url)) {
+        $url = defined('APP_NAME') ? '/' . APP_NAME : '';
+    }
+
+    if (!s_bad_ajax()) {
+        return s_action_json(array('error' => 1, 'redirect' => $url));
+    }
+
+
+    //302
+    header("Location: {$url}");
+
+    return "";
+}
+
+
