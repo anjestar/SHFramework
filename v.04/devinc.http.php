@@ -147,7 +147,7 @@ function _s_http_post2(&$curl, &$params) {
         unset($value);
     }
 
-    curl_setopt($curl, CURLOPT_POSTFIELDS, implode(";&", $posts));
+    curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $posts));
 
     unset($posts);
 }

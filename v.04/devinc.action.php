@@ -34,6 +34,10 @@ function s_action_user($verify=true) {
         return false;
     }
 
+    //将cookie中的变量换成标准的uid, uname
+    $cookie['uid']   = $cookie['uniqueid'];
+    $cookie['uname'] = $cookie['screen_name'];
+
     if ($verify === false) {
         return $cookie;
     }
@@ -43,12 +47,22 @@ function s_action_user($verify=true) {
 }
 
 
+//当前请求的时间
 function s_action_time() {
     return $_SERVER["REQUEST_TIME"];
 }
 
 
+
 function s_action_json($data) {
+    if ($data === false) {
+        //多半是直接函数调用后返回的false
+        $data = array(
+            'error'     => 500,
+            'errmsg'    => '参数错误或服务器调用失败',
+        );
+    }
+
     echo json_encode($data);
 }
 
@@ -58,6 +72,8 @@ function s_action_xml($data) {
 }
 
 
+
+//只提供给flash获取数据
 function s_action_data() {
     if (s_bad_get('token', $token)
         || s_bad_string($GLOBALS["HTTP_RAW_POST_DATA"], $data)
@@ -83,12 +99,15 @@ function s_action_data() {
 }
 
 
+//返回用户的IPV4地址
 function s_action_ip() {
     return "000.000.000.000";
 }
 
 
+//返回http的referer
 function s_action_referer() {
+    return "";
 }
 
 function s_action_error($message="no params.", $code=99, $type="json") {

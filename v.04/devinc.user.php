@@ -19,36 +19,39 @@
 
 
 //获取用户的信息（先从缓存中获取，再从API中获取）
-function s_user_by_uid($uid) {
+function s_user_by_uid($uid, $sample=true) {
     if (s_bad_id($uid)) {
         return false;
     }
 
 	$key = "user_by_uid#" . $uid;
 
-    if (false === ( $user = s_memcache($key) )) {
-        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", array('uid'=>$uid)) )) {
+    if (false === ( $ret = s_memcache($key) )) {
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", array('uid' => $uid)) )) {
             return s_err_sdk();
         }
 
-        //只缓存少数数据：头像、昵称、
-        $user = array();
-        $user['id']         = $ret['id'];
-        $user['name']       = $ret['screen_name'];
-        $user['a50']        = $ret['profile_image_url'];
-        $user['a180']       = str_replace('/50/', '/180/', $ret['profile_image_url']);
-        $user['wurl']       = $ret['profile_url'];
-        $user['domain']     = $ret['domain'];
-
-        $user['location']   = $ret['location'];
-        $user['province']   = $ret['province'];
-        $user['city']       = $ret['city'];
-
-        //存储memcache中
-        s_memcache($key, $user);
+        //由于不包括经常更换的数据，所以存储时间为1天
+        s_memcache($key, $ret, 24 * 3600);
     }
 
-	return $user;
+    //规范标准输出
+    $ret['uid']        = $ret['id'];
+    $ret['uname']      = $ret['screen_name'];
+    $ret['a50']        = $ret['profile_image_url'];
+    $ret['a180']       = $ret['avatar_large'];
+    $ret['purl']       = $ret['profile_url'];
+
+    unset($ret['purl']);
+    unset($ret['avatar_large']);
+    unset($ret['profile_image_url']);
+
+    if ($sample === true) {
+        //删除一些多余的数据
+        unset($ret['status']);
+    }
+
+	return $ret;
 }
 
 
@@ -398,7 +401,6 @@ function s_user_ship($uid) {
     //2.0接口返回程序未被授权
     //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
     return s_weibo_http("http://api.t.sina.com.cn/friendships/show.json", $data);
-    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
 }
 
 
