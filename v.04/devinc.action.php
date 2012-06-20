@@ -142,21 +142,25 @@ function s_action_redirect($url) {
 }
 
 
-//重定向
-function s_action_page($tpl, $assign) {
-    if (s_bad_string($url)) {
-        $url = defined('APP_NAME') ? '/' . APP_NAME : '';
+//返回tpl文件
+function s_action_page($assign=false, $tpl=false) {
+    if ($tpl === false) {
+        //需要自动设置$tpl路径
+        if (s_bad_string($_SERVER['SCRIPT_FILENAME'], $file)
+            || false === ( $pos = strrpos($file, '.php') )
+            || false === ( $tpl = substr($file, 0, $pos) )
+        ) {
+            return false;
+        }
+
+        //截取php文件，得到tpl文件
+        $tpl .= '.tpl';
     }
 
-    if (!s_bad_ajax()) {
-        return s_action_json(array('error' => 1, 'redirect' => $url));
+    if (strpos($tpl, '/') !== 0) {
+        //相对路径
     }
 
 
-    //302
-    header("Location: {$url}");
-
-    return "";
+    return s_smarty($tpl, $assign);
 }
-
-

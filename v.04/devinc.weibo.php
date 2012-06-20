@@ -158,8 +158,7 @@ function s_weibo_http($url, $params=false, $method="get") {
     if (false === ( $data = s_http_json($url, $params, $method) )
         || isset($data['error_code'])
     ) {
-        //var_dump($data);
-        return false;
+        return s_err_action($data['error']);
     }
 
     return $data;
