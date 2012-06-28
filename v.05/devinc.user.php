@@ -310,8 +310,10 @@ function s_user_avatar(&$avatar) {
         $data['image'] = $avatar;
     }
 
-    return s_weibo_http('http://i2.api.weibo.com/2/account/avatar/upload.json', $data, 'post');
+    return s_weibo_http('https://api.weibo.com/2/account/avatar/upload.json', $data, 'post');
+    //    http://i2.api.weibo.com/2/account/avatar/upload.json
 }
+
 
 //用户关注某人
 function s_user_follow($fuid) {
@@ -379,6 +381,49 @@ function s_user_followers($uid, $count=200, $page=1) {
     return $users;
 }
 
+
+//用户的互粉列表
+function s_user_friends($uid, $count=200, $page=1) {
+    if (s_bad_id($count)
+        || s_bad_id($page)
+    ) {
+        return s_err_arg();
+    }
+
+    if (!s_bad_id($uid)) {
+        //微博ID
+        $data['uid'] = $uid;
+
+    } else if (!s_bad_string($uid)) {
+        //微博昵称
+        $data['screen_name'] = $uid;
+    }
+
+    $data['count']  = $count > 5000 ? 200 : $count;
+    //游标从0开始
+    $data['cursor'] = $page - 1;
+
+    $key = "user_followers_by_uid#{$uid}_{$count}_{$page}";
+
+    if (false !== ( $users = s_memcache($key) )) {
+        return $users;
+    }
+
+    //缓存中没有，从微博平台中获取
+    if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers.json", $data) )
+        || s_bad_array($ret['users'])
+    ) {
+        return false;
+    }
+
+
+    $users = s_user_sample($ret['users']);
+
+    //缓存中存储起来
+    s_memcache($key, $users);
+
+    return $users;
+}
 
 //用户与对方之间的关系
 function s_user_ship($uid) {

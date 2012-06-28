@@ -198,6 +198,41 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
     return $data;
 }
 
+
+//返回带gps信息的微博数据，默认每页20条
+function s_weibo_gps_list_by_uid($uid, $page=1, $count=20) {
+    if (s_bad_id($uid)
+        || s_bad_id($page)
+        || s_bad_id($count)
+
+        || $count > 200
+    ) {
+        return false;
+    }
+
+    //看cache中是否存在
+    $key = "weibo_gps_list_by_uid#" . $uid . $page. $count;
+
+    if (false === ( $data = s_memcache($key) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            "user_id"   => $uid,
+            "count"     => $count,
+            "page"      => $page,
+        );
+
+        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/place/user_timeline.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来900秒（15分钟）
+        //$mem->set($key, $data, 0, 900);
+    }
+
+    return $data;
+}
+
+
 function s_weibo_2id_by_mids($mids, $type=1) {
     $is_array = 0;
 
@@ -304,3 +339,4 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 
     return $list;
 }
+

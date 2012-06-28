@@ -31,7 +31,7 @@ function s_string_length($string, $trim=false) {
 
 
 
-//取得where后所有的条件语句(where a=1 and b=1 and c=1 order by xx group by yy limit 10)
+//将特殊字符替换掉，以防止sql注入
 function s_string_safe($string, $trim=false) {
     if (s_bad_string($string, $string, $trim)) {
         return false;
@@ -45,6 +45,23 @@ function s_string_safe($string, $trim=false) {
 
     return $string;
 }
+
+
+//将特殊字符替换掉，以出现CSRF攻击
+function s_string_html($string, $trim=false) {
+    if (s_bad_string($string, $string, $trim)) {
+        return false;
+    }
+
+    $string = str_replace('&', '&amp;', $string);
+    $string = str_replace("'", '&apos;', $string);
+    $string = str_replace('"', '&quot;', $string);
+    $string = str_replace('>', '&gt;', $string);
+    $string = str_replace('<', '&lt;', $string);
+
+    return $string;
+}
+
 
 
 //将字符串创建成目录

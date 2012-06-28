@@ -152,7 +152,7 @@ function s_bad_telphone($phone, &$var=false) {
 
 
 //返回post值
-function s_bad_post($key, &$var=false, $type="string", $length=false) {
+function s_bad_post($key, &$var=false, $type="string", $html=true) {
     if (s_bad_string($key)
         || !isset($_POST[$key])
     ) {
@@ -162,8 +162,23 @@ function s_bad_post($key, &$var=false, $type="string", $length=false) {
 
     if ($type === "string") {
         //字符类型
-        return s_bad_string($_POST[$key], $var);
+        if ($html !== true) {
+            //不需要转义，直接返回判断结果
+            return s_bad_string($_GET[$key], $var);
+        }
 
+        //需要对参数转义处理
+        if (true === s_bad_string($_GET[$key], $var)) {
+            //不需要转义，因为参数已经验证失败
+            return true;
+        }
+
+        if ($var !== false) {
+            $var = s_string_html($var);
+        }
+
+        //验证成功，此处返回
+        return false;
 
     } else if ($type === "int") {
         //整型
@@ -211,7 +226,7 @@ function s_bad_post($key, &$var=false, $type="string", $length=false) {
 
 
 //返回get值
-function s_bad_get($key, &$var=false, $type="string") {
+function s_bad_get($key, &$var=false, $type="string", $html=true) {
     if (s_bad_string($key)
         || !isset($_GET[$key])
     ) {
@@ -221,7 +236,23 @@ function s_bad_get($key, &$var=false, $type="string") {
 
     if ($type === "string") {
         //字符类型
-        return s_bad_string($_GET[$key], $var);
+        if ($html !== true) {
+            //不需要转义，直接返回判断结果
+            return s_bad_string($_GET[$key], $var);
+        }
+
+        //需要对参数转义处理
+        if (true === s_bad_string($_GET[$key], $var)) {
+            //不需要转义，因为参数已经验证失败
+            return true;
+        }
+
+        if ($var !== false) {
+            $var = s_string_html($var);
+        }
+
+        //验证成功，此处返回
+        return false;
 
     } else if ($type === "int") {
         //整型
