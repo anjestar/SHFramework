@@ -367,7 +367,7 @@ function _s_db_insert($table, &$data) {
 
     foreach (array_values($data) as $value) {
         if (is_string($value)) {
-            $arr[] = '"' . s_string_safe($value) . '"';
+            $arr[] = '"' . s_safe_value($value) . '"';
 
         } else if (is_int($value)) {
             $arr[] = $value;
@@ -383,7 +383,7 @@ function _s_db_insert($table, &$data) {
 
         } else {
             //非法类型，转成字符串
-            $arr[] = '"' .  s_string_safe(strval($value)) . '"';
+            $arr[] = '"' .  s_safe_value(strval($value)) . '"';
         }
     }
 
@@ -426,7 +426,7 @@ function _s_db_update($table, &$v1, &$v2) {
             continue;
         }
 
-        $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_string_safe($value) . '"' : $value );
+        $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_safe_value($value) . '"' : $value );
     }
 
     $sql  = "update `{$table}` set " . implode(", ", $values) . " where `id`={$pid}";

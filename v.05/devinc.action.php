@@ -4,8 +4,8 @@
 // devinc.action.php
 //	获取action的相关函数
 //
-//	s_action_user()
-//	    返回服务器请求的时间
+//	s_action_user($update=true, $checkref=true)
+//	    返回服务器请求的时间。$update马上更新，$checkref同源判断
 //  
 //	s_action_time()
 //	    返回服务器请求的时间
@@ -24,7 +24,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_action_user($verify=true) {
+function s_action_user($update=true, $checkref=true) {
+    //检查referer
+    if ($checkref === true) {
+        if (false === ( $ref = s_action_referer() )) {
+            //没有来源，有可能是非法请求或者是flash请求
+            return false;
+        }
+
+        if (false === ( $allows = function_exists('source_list') )) {
+        }
+    }
+
     //先从memcache中获取
     if (false === ( $sso = new SSOCookie('cookie.conf') )
         || false === ( $cookie = $sso->getCookie() )
@@ -38,7 +49,7 @@ function s_action_user($verify=true) {
     $cookie['uid']   = $cookie['uniqueid'];
     $cookie['uname'] = $cookie['screen_name'];
 
-    if ($verify === false) {
+    if ($update === false) {
         return $cookie;
     }
 
@@ -58,10 +69,17 @@ function s_action_json($data) {
     if ($data === false) {
         //多半是直接函数调用后返回的false
         $data = array(
-            'error'     => 500,
-            'errmsg'    => '参数错误或服务器调用失败',
+            'error'     => 100,
+            'errmsg'    => '参数错误',
         );
     }
+
+
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); 
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . 'GMT'); 
+    header('Cache-Control: no-cache, must-revalidate'); 
+    header('Pragma: no-cache');
+    header('content-type: application/json; charset=utf-8');
 
     echo json_encode($data);
 }
@@ -99,16 +117,31 @@ function s_action_data() {
 }
 
 
-//返回用户的IPV4地址
+//返回用户的IP地址
 function s_action_ip() {
-    return "000.000.000.000";
+    if (isset($_SERVER['HTTP_CLIENT_IP'])) {
+        //客户IP地址
+        return $_SERVER['HTTP_CLIENT_IP'];
+
+    } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        //经过代理服务器的IP地址列表
+        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+
+    } else if(isset($_SERVER['REMOTE_ADDR'])) {
+        //可能是代理服务器的最后一个IP地址
+        return $_SERVER['REMOTE_ADDR'];
+    } else {
+        //没有了，返回默认的IPV4
+        return '000.000.000.000';
+    }
 }
 
 
 //返回http的referer
 function s_action_referer() {
-    return "";
+    return $_SERVER['referer'];
 }
+
 
 function s_action_error($message="no params.", $code=99, $type="json") {
     $error = array(
@@ -123,6 +156,7 @@ function s_action_error($message="no params.", $code=99, $type="json") {
         //s_action_xml($error);
     //}
 }
+
 
 //重定向
 function s_action_redirect($url) {
@@ -166,17 +200,66 @@ function s_action_page($assign=false, $tpl=false) {
 }
 
 
-//返回一个临时文件
+//返回一个临时文件，此文件只针对当前进程。
 function s_action_file($path=false) {
     if ($path === false) {
-        //获取系统当前的临时目录
-        $path = $_SERVER['SINASRV_CACHE_DIR'] . ( defined('APP_NAME') ? APP_NAME : 'smarty_autocreate' );
+        //随机产生一个文件
+        $path = s_action_time() . '_' . rand();
     }
 
-    //随机产生一个文件
-    $path .= s_action_time() . '_' . rand(0, 10000);
+    if (substr($path, 0, 1) !== '/') {
+        //非绝对路径，处理成绝对路径
+        if (false === ( $dir = s_action_dir() )
+            || s_bad_string($dir['dir'], $dir)
+        ) {
+            //获取默认临时目录失败
+            return false;
+        }
+
+        //生成绝对路径
+        $path = $dir['dir'] . $path;
+    }
 
 
-    //如果定入成功，返回文件路径
+    //清空已存在的文件
     return false === file_put_contents($path, '') ? false : $path;
+}
+
+
+//返回一个临时目录，此目录只针对当前进程。
+function s_action_dir($path=false, $mask=0755) {
+    if ($path === false) {
+        $path = defined('APP_NAME') ? APP_NAME : 'tmp';
+    }
+
+    if (s_bad_string($path)) {
+        return false;
+    }
+
+    $real = false;
+    //检查是否为绝对路径
+    if (substr($path, 0, 1) !== '/') {
+        //非绝对路径自动添加项目前缀
+        if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
+            $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
+        }
+
+    } else {
+        //绝对路径
+        $real = $path;
+    }
+
+
+    if (!is_dir($real)
+        && !mkdir($real, $mask, true)
+    ) {
+        return false;
+    }
+
+    return array(
+        // /data1/www/cache/all.vic.sina.com.cn/disney
+        // http://all.vic.sina.com.cn/cache
+        "url" => $_SERVER["SINASRV_CACHE_URL"] . "/" . $path,
+        "dir" => $_SERVER["SINASRV_CACHE_DIR"] . $path,
+    );
 }

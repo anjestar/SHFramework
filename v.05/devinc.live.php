@@ -39,7 +39,7 @@
 //订阅直播
 function s_live_watch(&$user, $lid) {
     if (s_bad_array($user)
-        || s_bad_array($lid)
+        || s_bad_id($lid)
     ) {
         return s_err_arg();
     }

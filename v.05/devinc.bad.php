@@ -164,17 +164,17 @@ function s_bad_post($key, &$var=false, $type="string", $html=true) {
         //字符类型
         if ($html !== true) {
             //不需要转义，直接返回判断结果
-            return s_bad_string($_GET[$key], $var);
+            return s_bad_string($_POST[$key], $var);
         }
 
         //需要对参数转义处理
-        if (true === s_bad_string($_GET[$key], $var)) {
+        if (true === s_bad_string($_POST[$key], $var)) {
             //不需要转义，因为参数已经验证失败
             return true;
         }
 
         if ($var !== false) {
-            $var = s_string_html($var);
+            $var = s_safe_html($var);
         }
 
         //验证成功，此处返回
@@ -248,7 +248,7 @@ function s_bad_get($key, &$var=false, $type="string", $html=true) {
         }
 
         if ($var !== false) {
-            $var = s_string_html($var);
+            $var = s_safe_html($var);
         }
 
         //验证成功，此处返回
