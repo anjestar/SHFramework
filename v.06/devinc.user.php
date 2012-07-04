@@ -465,3 +465,26 @@ function s_user_sample(&$users) {
     return $users;
 }
 
+
+//发送私信（内部接口，外部禁用）
+function s_user_message($uid, $message, $mid=false) {
+    if (s_bad_id($uid)) {
+        return false;
+    }
+
+    if (s_bad_string($message)) {
+        return false;
+    }
+
+    $data = array();
+    $data['uid']    = $uid;
+    $data['text']   = $message;
+
+    if (is_int($mid)) {
+        $data['id'] = $mid;
+    }
+
+
+    return s_weibo_http("http://i2.api.weibo.com/2/direct_messages/new.json", $data, 'post');
+}
+

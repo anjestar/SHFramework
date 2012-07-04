@@ -191,8 +191,8 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
             return false;
         }
        
-        //缓存起来900秒（15分钟）
-        //$mem->set($key, $data, 0, 900);
+        //缓存起来60秒
+        $mem->set($key, $data, 0, 60);
     }
 
     return $data;
@@ -225,8 +225,8 @@ function s_weibo_gps_list_by_uid($uid, $page=1, $count=20) {
             return false;
         }
 
-        //缓存起来900秒（15分钟）
-        //$mem->set($key, $data, 0, 900);
+        //缓存起来60秒
+        $mem->set($key, $data, 0, 60);
     }
 
     return $data;
@@ -340,3 +340,52 @@ function s_weibo_detail_by_mid($mid, $key=false) {
     return $list;
 }
 
+
+//搜索微博数据（内部接口）
+function s_weibo_search($sid, $uid=false, $q=false, $page=1, $size=10, $istag=0, $sort='time', $start=false, $end=false) {
+    if (s_bad_string($sid)) {
+        return s_err_arg();
+    }
+
+
+    //看cache中是否存在
+    $key = "weibo_search#" . $uid . $q . $page . $size . $istag . $sort . $start . $end . $sid;
+
+    if (false === ( $data = s_memcache($key) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            'sid'       => $sid,
+            'page'      => $page,
+            'count'     => $size,
+        );
+
+        if (is_string($q)) {
+            $params['q'] = $q;
+        }
+
+        if (!s_bad_0id($istag)) {
+            $params['istag'] = $istag;
+        }
+
+        if (!s_bad_id($uid)) {
+            $params['uid'] = $uid;
+        }
+
+        if (!s_bad_id($start)) {
+            $params['starttime'] = $start;
+        }
+
+        if (!s_bad_id($end)) {
+            $params['endtime'] = $end;
+        }
+
+        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/search/statuses.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来60秒
+        s_memcache($key, $data, 60);
+    }
+
+    return $data;
+}
