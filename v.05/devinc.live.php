@@ -45,7 +45,7 @@ function s_live_watch(&$user, $lid) {
     }
 
 
-    $key = 'live_watch_by_lid#' . $lid;
+    $key = 'live_watch_by_lid#' . $lid . '_'. $user['uid'];
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(

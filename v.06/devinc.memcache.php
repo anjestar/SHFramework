@@ -53,12 +53,18 @@ function &mem_cache_global() {
 
 
 //对memcached操作
-function s_memcache($key, &$value=false, $time=300) {
+function s_memcache($key, &$value=false, $time=300, $replace=false) {
     if (s_bad_string($key)) {
         return false;
     }
 
-    if ($value === false) {
+    if ($replace === true
+        && s_memcahce_get($key) !== false
+    ) {
+        //替换操作
+        return s_memcache_reset($key, $value, $time);
+
+    } else if ($value === false) {
         //获取memcache值
         return s_memcache_get($key);
 
@@ -66,8 +72,8 @@ function s_memcache($key, &$value=false, $time=300) {
         //设置memcache值
         return s_memcache_set($key, $value, $time);
     }
-
     
+
     return false;
 }
 
@@ -80,9 +86,18 @@ function s_memcache_get($key) {
         return false;
     }
 
-    $ret = $cache->get(md5(MEM_CACHE_KEY_PREFIX . $key));
+    if (false === ( $ret = $cache->get(md5(MEM_CACHE_KEY_PREFIX . $key)) )) {
+        return false;
+    }
 
-    return $ret == null? false : json_decode($ret, true);
+    if (false === ( $json = json_decode($ret, true)) ) {
+        //解析成json失败,返回原值
+        return $ret;
+
+    } else {
+        //返回json数据
+        return $json;
+    }
 }
 
 
@@ -99,6 +114,25 @@ function s_memcache_set($key, &$value, $time) {
 
     //不做值存在检查，直接写
     return $cache->set($key, json_encode($value), $time);
+}
+
+
+//更新memcache值
+function s_memcache_reset($key, &$value, $time) {
+    if (s_bad_string($key)
+        || false === ( $cache = s_memcache_local() )
+    ) {
+        return false;
+    }
+
+    if ($time === false) {
+        //时间不替换
+        return $cache->replace(md5(MEM_CACHE_KEY_PREFIX . $key), $value);
+
+    } else {
+        //时间也需要修改
+        return $cache->replace(md5(MEM_CACHE_KEY_PREFIX . $key), $value, $time);
+    }
 }
 
 
