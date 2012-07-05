@@ -5,7 +5,11 @@
 //	产生pagebar相关的属性
 //
 //
-//	s_pagebar_detail()
+//	s_pagebar_detail($current, $total, $size=20, $gap=5)
+//	    $current    当前页
+//	    $total      总数
+//	    $size       每页多少条
+//	    $gap        显示的页码数
 //	    返回pagebar数组
 //	        array(
 //              "current"   => 2,
@@ -22,10 +26,10 @@
 
 
 //返回分页对象
-function s_pagebar_detail($current, $total, $count=20, $gap=5) {
+function s_pagebar_detail($current, $total, $size=20, $gap=5) {
     if (s_bad_id($current, $cuttent)
         || s_bad_id($total, $total)
-        || s_bad_id($count, $count)
+        || s_bad_id($size, $size)
         || s_bad_id($gap, $gap)
     ) {
         return false;
@@ -33,7 +37,7 @@ function s_pagebar_detail($current, $total, $count=20, $gap=5) {
 
 
     $diff   = floor($gap / 2);
-    $max    = ceil($total / $count);
+    $max    = ceil($total / $size);
     $gap    = $gap - 1;
 
     //检查当前页是否符合最小页或最大页
