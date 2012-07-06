@@ -339,46 +339,58 @@ function s_user_follow($fuid) {
 
 
 //用户的粉丝列表
-function s_user_followers($uid, $count=200, $page=1) {
-    if (s_bad_id($count)
+function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
+    if (s_bad_id($uid)
         || s_bad_id($page)
+        || s_bad_id($size)
+        || s_bad_string($sort)
     ) {
         return s_err_arg();
     }
 
-    if (!s_bad_id($uid)) {
-        //微博ID
-        $data['uid'] = $uid;
+    //不同的排列方式对应不同的接口地址
+    $sorts = array(
+        //按联系时间排序
+        'time'  => 'http://i2.api.weibo.com/2/friendships/followers/sort_interactive.json',
+        //按粉丝数排序
+        'sum'   => 'http://i2.api.weibo.com/2/friendships/followers/sort_followers.json',
+        //按粉丝活跃度排序
+        'vigor' => 'http://api.t.sina.com.cn/friendships/followers/active.json',
+    );
 
-    } else if (!s_bad_string($uid)) {
-        //微博昵称
-        $data['screen_name'] = $uid;
+    if (!isset($sorts[$sort])) {
+        //未指定排序
+        $sort = 'time';
     }
 
-    $data['count']  = $count > 5000 ? 200 : $count;
-    //游标从0开始
-    $data['cursor'] = $page - 1;
-
-    $key = "user_followers_by_uid#{$uid}_{$count}_{$page}";
-
-    if (false !== ( $users = s_memcache($key) )) {
-        return $users;
-    }
-
-    //缓存中没有，从微博平台中获取
-    if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/followers.json", $data) )
-        || s_bad_array($ret['users'])
-    ) {
-        return false;
+    if ($size > 200) {
+        $size = 200;
     }
 
 
-    $users = s_user_sample($ret['users']);
+    $key = "user_follower_by____#{$uid}_{$sort}_{$size}_{$page}";
 
-    //缓存中存储起来
-    s_memcache($key, $users);
+    if (false === ( $ret = s_memcache($key) )) {
+        //缓存中没有，从微博平台中获取
 
-    return $users;
+        $data = array();
+        $data['uid']    = $uid;
+        $data['page']   = $page;
+        $data['count']  = $size;
+
+        if ( false === ( $ret = s_weibo_http($sorts[$sort], $data) )
+            || s_bad_array($ret['users'], $users)
+        ) {
+            return false;
+        }
+
+
+        //缓存中存储起来（缓存5分钟）
+        s_memcache($key, $ret, 300);
+    }
+
+    //返回处理之后的用户数据
+    return s_user_sample($ret['users']);
 }
 
 
