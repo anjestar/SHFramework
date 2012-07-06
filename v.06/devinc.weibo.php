@@ -226,7 +226,7 @@ function s_weibo_gps_list_by_uid($uid, $page=1, $count=20) {
         }
 
         //缓存起来60秒
-        $mem->set($key, $data, 0, 60);
+        s_memcache($key, $data, 60);
     }
 
     return $data;
