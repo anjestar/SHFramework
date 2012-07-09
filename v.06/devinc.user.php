@@ -107,112 +107,32 @@ function s_user_by_domain($domain) {
 
 //批量获取用户信息（内部接口，外部禁用）
 function s_users_by_uids(&$uids, $encoded=false) {
-    if (!s_bad_array($uids)
+    if (s_bad_array($uids)
         || !( $uids = array_unique($uids) )
         || !( $uids = array_values($uids) )
-        || empty($uids)
+        || false === asort($uids)
     ) {
         return false;
     }
 
+
+    $uids1  = implode(',', $uids);
+    $key    = "users_by_uids#" . $uids1 . $encoded;
+
     //看cache中是否存在
-    asort($uids);
-	$mem  = mem_cache_share();
-    $key  = md5(MEM_CACHE_KEY_PREFIX."_user_by_uids_" . implode(",", $uids) . strval($encoded));
+    if (false === ( $data = s_memcache($key) )) {
+        //从服务器获取
+        $params = array();
+        $params['uids']         = $uids1;
+        //$params['trim_status '] = 1;
+        //$params['simplify']     = 1;
 
-    if (( $data = $mem->get($key) )) {
-        //缓存中已经存在
-		$data = json_decode($data, true);
-    }
-
-    if (!$data) {
-        //缓存中没有，请求服务器
-        $max    = 20;
-        $time   = 0;
-        $times  = ceil(count($uids) / $max);
-        $list   = array();
-
-        do {
-            $ids = array();
-
-            $num0 = $time * $max;
-            $num1 = ($time + 1) * $max - 1;
-
-            foreach (range($num0, $num1) as $index) {
-                if (!isset($uids[$index])
-                    || intval($uids[$index]) <= 0
-                ) {
-                    break;
-                }
-
-                $ids[] = $uids[$index];
-            }
-
-            $params = array(
-                "uids"   => implode(",", $ids),
-                "source" => APP_KEY,
-                "cookie" => array(
-                    "SUE"   => $_COOKIE["SUE"],
-                    "SUP"   => $_COOKIE["SUP"],
-                ),
-            );
-
-            $data = s_http_get();
-
-            $req = new HTTP_Request('http://i2.api.weibo.com/2/users/show_batch.json');
-            $req->setMethod(HTTP_REQUEST_METHOD_GET);	
-            $req->addCookie("SUE",URLEncode($_COOKIE["SUE"]));
-            $req->addCookie("SUP",URLEncode($_COOKIE["SUP"]));
-            $req->addQueryString('uids', implode(",", $ids));
-            $req->addQueryString('is_encoded', $encoded === false ? 0 : 1);
-            $req->addQueryString('source', MBLOG_APP_KEY);
-
-            $rs = $req->sendRequest();
-
-
-            if (PEAR::isError($rs)
-                || !( $ret = json_decode($req->getResponseBody(), true) )
-                || isset($ret["error_code"])
-            ) {
-                return false;
-            }
-
-            //有可能是空数组
-            if (isset($ret["users"])) {
-                $list = array_merge($list, $ret["users"]);
-            }
-
-            unset($ret);
-        } while (( ++ $time ) < $times);
-
-
-        $data = array();
-
-        //重新组合成uid => array()
-        foreach ($list as &$item) {
-            if (isset($item["id"])
-                && $item["idstr"] > 0
-            ) {
-                $data[$item["idstr"]] = $item;
-            }
-
-            unset($item);
+        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/users/show_batch.json', $params) )) {
+            return false;
         }
 
-
-        //检查自己是否在数组中
-        if (false !== ( $me = login_user_info() )
-            && ( $meid = $me["uniqueid"] )
-            && in_array($meid, $uids)
-            && ( $me = get_user_by_token(intval($meid)) )
-        ) {
-            $data[$me["id"]] = $me;
-        }
-
-        unset($list);
-       
-        //缓存十小时
-		$mem->set($key, json_encode($data), 0, MEM_CACHE_LIFETIME_LUCKY);
+        //缓存24小时
+        s_memcache($key, $data, 24 * 3600);
     }
 
     return $data;
@@ -290,6 +210,30 @@ function s_user_reply_comment($weibo) {
 
     return s_weibo_http("https://api.weibo.com/2/comments/reply.json", $weibo);
 }
+
+
+//用户转发微博
+//  $wid        微博主键
+//  $message    回复内容
+//  $reply      转发的形式：1、评论当前微博；2、评论原微博；3、1和2都操作
+function s_user_forward(&$wid, &$message=false, $reply=0) {
+    if (s_bad_id($wid)
+        || s_bad_0id($reply)
+    ) {
+        return false;
+    }
+
+    $data['id']         = $wid;
+    $data['is_comment'] = $reply;
+
+    if ($message !== false) {
+        $data['status'] = $message;
+    }
+
+    return s_weibo_http('https://api.weibo.com/2/statuses/repost.json', $data, 'post');
+}
+
+
 
 //用户更新头像（高级权限）
 function s_user_avatar(&$avatar) {
