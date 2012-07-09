@@ -56,6 +56,27 @@ function s_http_response($url, &$params=false, $method="get") {
         unset($params["cookie"]);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    //特殊变量（_username,和_password)，用于给http添加用户名及密码
+    //
+    $userpass = "";
+    if (isset($params['_username'])) {
+        $userpass = $params['_username'];
+    }
+
+    if (isset($params['_password'])) {
+        $userpass = $userpass . ':' . $params['_username'];
+    }
+
+    if ($userpass) {
+        //有用户名与密码添加到http头部
+        curl_setopt($curl, CURLOPT_USERPWD, $userpass);
+    }
+
+    //
+    ////////////////////////////////////////////////////////////////////////////////
+
+
     //将余下的post字段添加到http请求中
     $arr = array();
 
