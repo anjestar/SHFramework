@@ -339,7 +339,7 @@ function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
 
 
 //用户的互粉列表
-function s_user_friends($uid, $count=200, $page=1) {
+function _s_user_friends($uid, $count=200, $page=1) {
     if (s_bad_id($count)
         || s_bad_id($page)
     ) {
@@ -380,6 +380,70 @@ function s_user_friends($uid, $count=200, $page=1) {
 
     return $users;
 }
+
+
+//用户的关注的列表
+function s_user_attention($uid, $sort=0, $page=1, $size=20) {
+    if (s_bad_id($uid)
+        || s_bad_id($size)
+        || s_bad_id($page)
+        || s_bad_0id($sort)
+    ) {
+        return false;
+    }
+
+    $data = array();
+    $data['uid']    = $uid;
+    $data['page']   = $page;
+    $data['count']  = $size;
+    $data['sort']   = $sort;
+
+    $key = "user_attentions_by_uid#{$uid}_{$type}_{$sort}_{$page}_{$size}";
+
+    if (false === ( $ret = s_memcache($key) )) {
+        if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/friends.json", $data) )) {
+            return false;
+        }
+
+        //缓存中存储起来
+        s_memcache($key, $ret);
+
+    }
+    return $ret;
+}
+
+
+//用户的双向关注的列表
+function s_user_friends($uid, $sort=0, $page=1, $size=20) {
+    if (s_bad_id($uid)
+        || s_bad_id($page)
+        || s_bad_id($size)
+        || s_bad_0id($sort)
+    ) {
+        return false;
+    }
+
+    $data = array();
+    $data['uid']    = $uid;
+    $data['page']   = $page;
+    $data['count']  = $size;
+    $data['sort']   = $sort;
+
+    $key = "user_friends_by_uid#{$uid}_{$type}_{$sort}_{$page}_{$size}";
+
+    if (false === ( $ret = s_memcache($key) )) {
+        if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/friends/bilateral.json", $data) )) {
+            return false;
+        }
+
+        //缓存中存储起来
+        s_memcache($key, $ret);
+
+    }
+
+    return $ret;
+}
+
 
 //用户与对方之间的关系
 function s_user_ship($uid) {
