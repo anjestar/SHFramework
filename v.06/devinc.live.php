@@ -37,7 +37,7 @@
 
 
 //订阅直播
-function s_live_watch(&$user, $lid) {
+function s_live_watch(&$user, $lid, $act=1) {
     if (s_bad_array($user)
         || s_bad_id($lid)
     ) {
@@ -45,13 +45,13 @@ function s_live_watch(&$user, $lid) {
     }
 
 
-    $key = 'live_watch_by_lid#' . $lid;
+    $key = 'live_watch_by_lid#' . $lid . $user['uid'] . $act;
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
             'uid' => $user['uid'],
             'lid' => $lid,
-            'act' => 0,
+            'act' => $act,
         );
 
         if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/live/live/subscribelive.php', $data, 'post') )) {
@@ -63,7 +63,6 @@ function s_live_watch(&$user, $lid) {
     }
 
     return $data;
-    //return s_live_filter($data);
 }
 
 
