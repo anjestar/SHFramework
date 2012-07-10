@@ -54,7 +54,7 @@ function s_live_watch(&$user, $lid) {
             'act' => 0,
         );
 
-        if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/sapps/live/subscribelive.php', $data, 'post') )) {
+        if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/live/live/subscribelive.php', $data, 'post') )) {
             return s_err_sdk();
         }
 
