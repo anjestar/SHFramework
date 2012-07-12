@@ -283,3 +283,9 @@ function s_bad_get($key, &$var=false, $type="string", $html=true) {
 function s_bad_gd() {
     return extension_loaded('gd') === false;
 }
+
+
+//非ajax请求，由于采用jquery，判断头部即可
+function s_bad_ajax() {
+    return !isset($_SERVER['X-Requested-With']) || isset($_SERVER['X-Requested-With']) !== 'XMLHttpRequest';
+}
