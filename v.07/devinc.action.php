@@ -159,20 +159,30 @@ function s_action_error($message="no params.", $code=99, $type="json") {
 
 
 //重定向
-function s_action_redirect($url) {
+function s_action_redirect($url, $delay=0, $msg=false) {
     if (s_bad_string($url)) {
         $url = defined('APP_NAME') ? '/' . APP_NAME : '';
     }
 
-    if (!s_bad_ajax()) {
-        return s_action_json(array('error' => 1, 'redirect' => $url));
+    if (s_bad_ajax()) {
+        if ($delay !== 0) {
+            //需要提示，输出页面
+
+            return ;
+        }
+
+
+        //非ajax请求，又没有提示语句，直接302
+        if (is_string($msg)) {
+            $url .= $msg;
+        }
+
+        header("Location: {$url}");
+
+        return ;
     }
 
-
-    //302
-    header("Location: {$url}");
-
-    return "";
+    return s_action_json(array('error' => 1, 'redirect' => $url));
 }
 
 

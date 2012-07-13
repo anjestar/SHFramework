@@ -414,7 +414,7 @@ function s_user_attention($uid, $sort=0, $page=1, $size=20) {
 
 
 //用户的双向关注的列表
-function s_user_friends($uid, $sort=0, $page=1, $size=20) {
+function s_user_friends($uid, $page=1, $size=20, $sort=0) {
     if (s_bad_id($uid)
         || s_bad_id($page)
         || s_bad_id($size)

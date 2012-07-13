@@ -144,7 +144,7 @@ function s_live_content(&$user, $lid, $page=1, $max=20) {
     }
 
 
-    $key = 'live_content_by_lid#' . $lid . $page . $max;
+    $key = 'live_contents_by_lid#lid=' . $lid . 'page=' . $page . 'max=' . $max;
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
@@ -155,12 +155,12 @@ function s_live_content(&$user, $lid, $page=1, $max=20) {
         );
 
 
-        if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/sapps/live/getlivecontents.php', $data))) {
+        if (false === ( $data = s_live_http('http://i.service.t.sina.com.cn/live/live/getlivecontents.php', $data))) {
             return s_err_sdk();
         }
 
         //缓存10秒钟
-        s_memcache($key, $data, 10);
+        s_memcache($key, $data, 5);
     }
 
 
