@@ -35,6 +35,48 @@ function s_weibo_by_wid($wid) {
 }
 
 
+//对微博的数据简单的处理下
+function s_weibo_sample(&$weibo, $timeshow='ago', $autolink=true) {
+    if (s_bad_array($weibo)) {
+        return false;
+    }
+
+    //添加wid变量和uid变量
+    $weibo['wid']   = $weibo['idstr'];
+    $weibo['uid']   = $weibo['user']['idstr'];
+
+    //添加缩略图 small 和 big变量
+    $weibo['small'] = $weibo['thumbnail_pic'];
+    $weibo['big']   = $weibo['original_pic'];
+
+
+    //添加用户头像 a50 和 a180
+    $weibo['a50']   = $weibo['user']['profile_image_url'];
+    $weibo['a180']  = $weibo['user']['avatar_large'];
+
+    //添加用户的昵称
+    $weibo['purl'] = $weibo['user']['profile_url'];
+    $weibo['uname'] = $weibo['user']['screen_name'];
+
+
+    //时间 ago / x月x日 x时x分
+    if ($timeshow === 'ago') {
+        // 换成'三天以前'
+        $weibo['time'] = s_weibo_ago($weibo['created_at'], false);
+
+    } else {
+        // 换成timeshow的格式
+        $weibo['time'] = s_weibo_time($weibo['created_at'], $timeshow);
+    }
+
+    if ($autolink === true) {
+        //将text中所有微博关键字都添加为可点击连接
+        //$weibo['text'] = s_weibo_linktext($weibo['text']);
+    }
+
+    return $weibo;
+}
+
 function s_weibo_list_ago($list) {
     if (s_bad_array($list)) {
         return false;
@@ -54,6 +96,48 @@ function s_weibo_list_ago($list) {
 
     return $list;
 }
+
+
+//格式化微博平台的时间
+//  将"Sun Jul 08 21:29:04 +0800 2012"格式化成"7月8日 21:29"
+function s_weibo_time($time, $format="m月d日 H:i", $postfix="") {
+    if (s_bad_string($time)
+        || s_bad_string($format)
+        || s_bad_0string($postfix)
+    ) {
+        return false;
+    }
+
+    return date($format . $postfix, strtotime($time));
+}
+
+
+//格式化微博平台的时间
+//  将"Sun Jul 08 21:29:04 +0800 2012"格式化成"3天前"
+function s_weibo_ago($time, $isint=true) {
+    if ($isint !== true) {
+        $time = strtotime($time);
+    }
+
+    if (s_bad_id($time)) {
+        $time = s_action_time();
+    }
+
+    $second = s_action_time() - $time;
+
+	if (( $diff = intval($second / (60 * 60 * 24) )) > 0 ) {
+        return $diff . "天前";
+
+    } else if (( $diff = intval($second / (60 *60) )) > 0) {
+        return $diff . "小时前";
+
+    } else if (( $diff = intval($second / 60) ) > 0) {
+        return $diff . "分钟前";
+	}
+
+	return "刚刚发表";
+}
+
 
 
 function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
@@ -78,26 +162,6 @@ function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
     return $list;
 }
 
-
-function s_weibo_ago($time) {
-    if (s_bad_id($time)) {
-        $time = s_action_time();
-    }
-
-    $second = s_action_time() - $time;
-
-	if (( $diff = intval($second / (60 * 60 * 24) )) > 0 ) {
-        return $diff . "天前";
-
-    } else if (( $diff = intval($second / (60 *60) )) > 0) {
-        return $diff . "小时前";
-
-    } else if (( $diff = intval($second / 60) ) > 0) {
-        return $diff . "分钟前";
-	}
-
-	return "刚刚发表";
-}
 
 //返回以json格式的weibo数据，此处为做error_code检查
 function s_weibo_http($url, $params=false, $method="get") {
@@ -237,7 +301,7 @@ function s_weibo_2id_by_mids($mids, $type=1) {
     $is_array = 0;
 
     if (is_array($mids)) {
-        sort($mids, SORT_STRING);
+        rsort($mids, SORT_STRING);
 
         $mids = implode(',', $mids);
 
@@ -251,7 +315,7 @@ function s_weibo_2id_by_mids($mids, $type=1) {
 
 
     //看cache中是否存在
-    $key = "weibo_2id_by_mids#" . $mids;
+    $key = "weibo_2id_by_mids#mids=" . $mids . "type=" . $type;
 
     if (false === ( $data = s_memcache($key) )) {
         //缓存中没有，请求服务器
@@ -317,14 +381,11 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 
             unset($list);
         }
-
-
-        $mid = array_unique($mid);
     }
 
     if (s_bad_array($mid)
         //得到所有的id
-        || false == ( $mid = s_weibo_2id_by_mids($mid) )
+        || false == ( $data = s_weibo_2id_by_mids($mid) )
     ) {
         return false;
     }
@@ -332,7 +393,7 @@ function s_weibo_detail_by_mid($mid, $key=false) {
     //查询所有的微博详情
     $list = array();
 
-    foreach ($mid as $key=>$wid) {
+    foreach ($data as $key=>$wid) {
         $list[$key] = s_weibo_by_wid($wid);
     }
 
@@ -349,7 +410,16 @@ function s_weibo_search($sid, $uid=false, $key=false, $page=1, $size=10, $istag=
 
 
     //看cache中是否存在
-    $mkey = "weibo_search#" . $uid . $key . $page . $size . $istag . $sort . $start . $end . $sid;
+    $mkey = "weibo_search#"
+        . 'uid='    . $uid
+        . 'key='    . $key
+        . 'page='   . $page
+        . 'size='   . $size
+        . 'istag='  . $istag
+        . 'sort='   . $sort
+        . 'start='  . $start
+        . 'end='    . $end
+        . 'sid='    . $sid;
 
     if (false === ( $data = s_memcache($mkey) )) {
         //缓存中没有，请求服务器
@@ -390,52 +460,3 @@ function s_weibo_search($sid, $uid=false, $key=false, $page=1, $size=10, $istag=
     return $data;
 }
 
-
-//搜索主题（内部接口）
-function s_weibo_topic($key, $page=1, $size=10) {
-    if (s_bad_string($key)) {
-        return s_err_arg();
-    }
-
-
-    //看cache中是否存在
-    $mkey = "weibo_search#" . $uid . $q . $page . $size . $istag . $sort . $start . $end . $sid;
-
-    if (false === ( $data = s_memcache($mkey) )) {
-        //缓存中没有，请求服务器
-        $params = array(
-            'sid'       => $sid,
-            'page'      => $page,
-            'count'     => $size,
-        );
-
-        if (is_string($q)) {
-            $params['q'] = $q;
-        }
-
-        if (!s_bad_0id($istag)) {
-            $params['istag'] = $istag;
-        }
-
-        if (!s_bad_id($uid)) {
-            $params['uid'] = $uid;
-        }
-
-        if (!s_bad_id($start)) {
-            $params['starttime'] = $start;
-        }
-
-        if (!s_bad_id($end)) {
-            $params['endtime'] = $end;
-        }
-
-        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/search/statuses.json', $params) )) {
-            return false;
-        }
-
-        //缓存起来60秒
-        s_memcache($mkey, $data, 60);
-    }
-
-    return $data;
-}
