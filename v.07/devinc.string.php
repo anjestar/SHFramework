@@ -28,4 +28,42 @@ function s_string_length($string, $trim=false) {
 }
 
 
+//替换微主题中的字符。将#随便#换成<a href="http://s.weibo.com/weibo/随便"
+function s_string_subject(&$weibo) {
+    if (s_bad_string($weibo)) {
+        return false;
+    }
+
+    return preg_replace("/\#(.*)\#/iUs", "<a href=\"http://s.weibo.com/weibo/$1\" title=\"$1\" target='_blank'>$0</a>", $weibo); 
+}
+
+
+//替换微博文字中的表情。将[开心]替换成<img src="http://weibo.com/face/231.gif />"
+function s_string_face(&$weibo) {
+    if (s_bad_string($weibo)) {
+        return false;
+    }
+
+    return preg_replace("/\#(.*)\#/iUs", "<a href=\"http://s.weibo.com/weibo/$1\" target=\"_blank\">$0</a>", $weibo); 
+}
+
+
+//替换微博文字中的微连接。将http://t.cn/ABcdafd 替换成<a href="http://t.cn/ABcdafd">http://t.cn/ABcdafd</a>
+function s_string_turl(&$weibo) {
+    if (s_bad_string($weibo)) {
+        return false;
+    }
+
+    return preg_replace("/(http\:\/\/t\.cn\/\w{7})/iUs", "<a action-type=\"feed_list_url\" mt=\"url\" href=\"$1\" title=\"$1\" target=\"_blank\">$1</a>", $weibo); 
+}
+
+
+//替换微博系统中的@用户名。将@啊段的马甲 替换成<a href="http://weibio.com/n/啊段的马甲">啊段的马甲</a>
+function s_string_at(&$weibo) {
+    if (s_bad_string($weibo)) {
+        return false;
+    }
+
+    return preg_replace("/\@([\w-\x{4e00}-\x{9fa5}]+)/u", "<a usercard=\"name=$1\" href=\"http://weibo.com/n/$1\">$0</a>", $weibo); 
+}
 
