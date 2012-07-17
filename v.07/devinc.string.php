@@ -57,7 +57,8 @@ function s_string_face(&$weibo) {
         return false;
     }
 
-    return preg_replace("/\#(.*)\#/iUs", "<a href=\"http://s.weibo.com/weibo/$1\" target=\"_blank\">$0</a>", $weibo); 
+    return $weibo;
+    //return preg_replace("/\#(.*)\#/iUs", "<a href=\"http://s.weibo.com/weibo/$1\" target=\"_blank\">$0</a>", $weibo); 
 }
 
 
@@ -77,6 +78,6 @@ function s_string_at(&$weibo) {
         return false;
     }
 
-    return preg_replace("/\@([\w-\x{4e00}-\x{9fa5}]+)/u", "<a usercard=\"name=$1\" href=\"http://weibo.com/n/$1\">$0</a>", $weibo); 
+    return preg_replace("/\@([\w_\x{4e00}-\x{9fa5}]+)/u", "<a usercard=\"name=$1\" href=\"http://weibo.com/n/$1\">$0</a>", $weibo); 
 }
 

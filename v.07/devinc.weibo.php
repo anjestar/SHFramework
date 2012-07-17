@@ -71,7 +71,10 @@ function s_weibo_sample(&$weibo, $timeshow='ago', $autolink=true) {
 
     if ($autolink === true) {
         //将text中所有微博关键字都添加为可点击连接
-        //$weibo['text'] = s_weibo_linktext($weibo['text']);
+        $weibo['text'] = s_string_at($weibo['text']);
+        $weibo['text'] = s_string_turl($weibo['text']);
+        $weibo['text'] = s_string_face($weibo['text']);
+        $weibo['text'] = s_string_subject($weibo['text']);
     }
 
     return $weibo;
@@ -173,8 +176,14 @@ function s_weibo_http($url, $params=false, $method="get") {
     $params["cookie"]["SUE"] = $_COOKIE["SUE"];
     $params["cookie"]["SUP"] = $_COOKIE["SUP"];
 
-    //添加APPKEY
-    $params["source"] = APP_KEY;
+        //添加APPKEY
+    if (isset($params['_APP_KEY'])) {
+        $params["source"] = $params['_APP_KEY'];
+
+    } else {
+        $params["source"] = APP_KEY;
+    }
+
 
     //上传图片。有两种情况
     //  1、@/image/web.jpg
@@ -455,6 +464,96 @@ function s_weibo_search($sid, $uid=false, $key=false, $page=1, $size=10, $istag=
 
         //缓存起来60秒
         s_memcache($mkey, $data, 60);
+    }
+
+    return $data;
+}
+
+
+
+//推送通知（高级接口）
+//      如果turl为false，会转换成http://t.cn/SADAxdda短链。为true时不转成短链
+//
+//  uids = array(uid1, uid2, uid3, uid4);
+//  $tid = 1232ad3121;
+//  keys = array(
+//      'object1'   => 啊段的马甲,
+//      'object2'   => 通过,
+//  );
+//  $url = "http://duanyong.tk/index.php";
+//
+function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) {
+    if (s_bad_array($uids)
+        || s_bad_string($tid)
+    ) {
+        return false;
+    }
+
+
+    $_keys = false;
+    $_uids = implode(',', $uids);
+
+    if ($keys) {
+        $_keys = array_values($keys);
+        $_keys = implode('&', $keys);
+    }
+
+
+    $mkey = 'weibo_notice_by_uids#uids=' . $_uids . 'tid=' . $tid . 'keys=' . $_keys . 'url=' . $url . 'noticeid' . $noticeid;
+    if (false === ( $data = s_memcache($mkey) )) {
+        $data = array(
+            'uids'      => $_uids,
+            'tpl_id'    => $tid,
+        );
+
+        if ($url) {
+            //如果是有url添加
+            $data['action_url'] = $url;
+        }
+
+        if ($keys) {
+            //合并模板数据
+            $data = array_merge($data, $keys);
+        }
+
+        if ($noticeid) {
+            //通知需要用新的APP_KEY
+            $data['_APP_KEY'] = $noticeid;
+        }
+
+
+        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/notification/send.json', $data, 'post') )) {
+            return s_err_sdk();
+        }
+
+        //缓存一小时
+        //s_memcache($mkey, $data, 3600);
+    }
+
+    return $data;
+}
+
+
+//将url转换成短链
+function s_weibo_surl($url) {
+    if (s_bad_string($url)) {
+        return false;
+    }
+
+    //看cache中是否存在
+    $mkey = 'weibo_surl#surl=' . $url;
+    if (false === ( $data = s_memcache($mkey) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            'url_long'  => $url,
+        );
+
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/short_url/shorten.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来一天
+        s_memcache($mkey, $data, 86400);
     }
 
     return $data;

@@ -41,7 +41,7 @@ function s_live_watch(&$user, $lid, $act=1) {
     if (s_bad_array($user)
         || s_bad_id($lid)
     ) {
-        return s_err_arg();
+        return false;
     }
 
 
@@ -327,11 +327,8 @@ function s_live_http($url, $params=false, $method="get") {
         $params = array();
     }
 
-    if (false === ( $data = s_http_json($url, $params, $method) )
-        || !isset($data['errno'])
-        //|| $data['errno'] != 1
-    ) {
-        //var_dump($data);
+    if (false === ( $data = s_http_json($url, $params, $method) )) {
+        var_dump($data);
         return false;
     }
 

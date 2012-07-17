@@ -143,6 +143,11 @@ function s_action_referer() {
 }
 
 
+//返回http的referer
+function s_action_source() {
+    return $_SERVER['referer'];
+}
+
 function s_action_error($message="no params.", $code=99, $type="json") {
     $error = array(
         'error'     => $code,
