@@ -379,7 +379,7 @@ function _s_db_insert($table, &$data) {
             $arr[] = $value;
 
         } else if (is_bool($value)) {
-            $arr[] = $value;
+            $arr[] = ($value === true ? 1 : 0);
 
         } else {
             //非法类型，转成字符串

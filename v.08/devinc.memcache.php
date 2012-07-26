@@ -58,6 +58,8 @@ function s_memcache($key, &$value=false, $time=300, $replace=false) {
         return false;
     }
 
+    return false;
+
     if ($replace === true
         && s_memcahce_get($key) !== false
     ) {

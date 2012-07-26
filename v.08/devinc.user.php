@@ -277,8 +277,8 @@ function s_user_follow($fuid) {
     }
 
     //2.0接口返回程序未被授权
-    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
-    return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
+    return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
+    //return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
 }
 
 
@@ -312,7 +312,7 @@ function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
     }
 
 
-    $key = "user_follower_by____#{$uid}_{$sort}_{$size}_{$page}";
+    $key = "user_follower_by#{$uid}_{$sort}_{$size}_{$page}";
 
     if (false === ( $ret = s_memcache($key) )) {
         //缓存中没有，从微博平台中获取
@@ -445,26 +445,44 @@ function s_user_friends($uid, $page=1, $size=20, $sort=0) {
 }
 
 
-//用户与对方之间的关系
-function s_user_ship($uid) {
+//用户与对方之间的关系（用户需要登录）
+function s_user_ship($source, $target) {
+    if (is_array($source)) {
+        //用户数组
+        $sid = $source['uid'];
+    } else {
+        $sid = $source;
+    }
+
+    if (is_array($target)) {
+        //目标用户数组
+        $tid = $target['uid'];
+    } else {
+        $tid = $target;
+    }
+
+    if (s_bad_id($sid)
+        || s_bad_id($tid)
+    ) {
+        return false;
+    }
+
     $data = array();
+    $data['source_id'] = $sid;
+    $data['target_id'] = $tid;
 
-    if (!s_bad_id($uid)) {
-        //微博ID
-        $data['target_id'] = $uid;
+    $key = "user_friendship_by_tuid#{$tid}_{$sid}";
 
-    } else if (!s_bad_string($uid)) {
-        //微博昵称
-        $data['target_screen_name'] = $uid;
+    if (false === ( $ret = s_memcache($key) )) {
+        if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/show.json", $data) )) {
+            return false;
+        }
+
+        //缓存中存储30秒
+        s_memcache($key, $ret, 30);
     }
 
-    if (s_bad_array($data)) {
-        return s_err_arg();
-    }
-
-    //2.0接口返回程序未被授权
-    //return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
-    return s_weibo_http("http://api.t.sina.com.cn/friendships/show.json", $data);
+    return $ret;
 }
 
 

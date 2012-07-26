@@ -78,6 +78,6 @@ function s_string_at(&$weibo) {
         return false;
     }
 
-    return preg_replace("/\@([\w_\x{4e00}-\x{9fa5}]+)/u", "<a usercard=\"name=$1\" href=\"http://weibo.com/n/$1\">$0</a>", $weibo); 
+    return preg_replace("/\@([\w_\x{4e00}-\x{9fa5}]+)/u", "<a usercard=\"name=$1\" title=\"$0\" href=\"http://weibo.com/n/$1\">$0</a>", $weibo); 
 }
 
