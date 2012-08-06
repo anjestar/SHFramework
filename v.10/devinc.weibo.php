@@ -64,6 +64,7 @@ function s_weibo_sample(&$weibo, $timeshow='ago', $autolink=true) {
     if (isset($weibo['user']['profile_image_url'])) {
         $weibo['a50']   = $weibo['user']['profile_image_url'];
     }
+
     if (isset($weibo['user']['avatar_large'])) {
         $weibo['a180']  = $weibo['user']['avatar_large'];
     }
@@ -72,6 +73,7 @@ function s_weibo_sample(&$weibo, $timeshow='ago', $autolink=true) {
     if (isset($weibo['user']['profile_url'])) {
         $weibo['purl'] = $weibo['user']['profile_url'];
     }
+
     if (isset($weibo['user']['screen_name'])) {
         $weibo['uname'] = $weibo['user']['screen_name'];
     }
@@ -248,12 +250,15 @@ function s_weibo_http($url, $params=false, $method="get") {
     }
 
 
+    //有一些错误码不需要返回false
     if (false === ( $data = s_http_json($url, $params, $method) )
+        || isset($data['error'])
         || isset($data['error_code'])
     ) {
-        return s_err_action($data['error']);
-    }
+        s_action_error($data['error'] . ':' . $data['request'], $data['error_code']);
 
+        exit($data['error_code']);
+    }
 
     return $data;
 }

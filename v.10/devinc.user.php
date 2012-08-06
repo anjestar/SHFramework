@@ -17,6 +17,33 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+function s_user_sample(&$user) {
+    if (s_bad_array($user)) {
+        return false;
+    }
+
+    if (isset($user['idstr'])) {
+        $user['uid'] = $user['idstr'];
+    }
+
+    if (isset($user['screen_name'])) {
+        $user['uname'] = $user['screen_name'];
+    }
+
+    if (isset($user['profile_image_url'])) {
+        $user['a50'] = $user['profile_image_url'];
+    }
+
+    if (isset($user['avatar_large'])) {
+        $user['a180'] = $user['avatar_large'];
+    }
+
+    if (isset($user['profile_url'])) {
+        $user['purl'] = $user['profile_url'];
+    }
+
+    return $user;
+}
 
 //获取用户的信息（先从缓存中获取，再从API中获取）
 function s_user_by_uid($uid, $sample=true) {
@@ -255,35 +282,24 @@ function s_user_avatar(&$avatar) {
     }
 
     return s_weibo_http('https://api.weibo.com/2/account/avatar/upload.json', $data, 'post');
-    //    http://i2.api.weibo.com/2/account/avatar/upload.json
 }
 
 
 //用户关注某人
-function s_user_follow($fuid) {
-    $data = array();
-
-    if (!s_bad_id($fuid)) {
-        //微博ID
-        $data['uid'] = $fuid;
-
-    } else if (!s_bad_string($fuid)) {
-        //微博昵称
-        $data['screen_name'] = $fuid;
-    }
-
-    if (s_bad_array($data)) {
-        return s_err_arg();
+function s_user_follow($suid, $tuid) {
+    if (s_bad_id($suid)
+        || s_bad_id($tuid)
+    ) {
+        return false;
     }
 
     //2.0接口返回程序未被授权
-    return s_weibo_http("https://api.weibo.com/2/friendships/create.json", $data, "post");
-    //return s_weibo_http("http://api.t.sina.com.cn/friendships/create/{$fuid}.json", $data, "post");
+    return s_weibo_http("https://api.weibo.com/2/friendships/create.json", array('uid' => $suid), "post");
 }
 
 
 //用户的粉丝列表
-function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
+function s_user_followers_by($uid, $sort='api', $page=1, $size=20) {
     if (s_bad_id($uid)
         || s_bad_id($page)
         || s_bad_id($size)
@@ -294,6 +310,7 @@ function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
 
     //不同的排列方式对应不同的接口地址
     $sorts = array(
+        'api'   => 'https://api.weibo.com/2/friendships/followers.json',
         //按联系时间排序
         'time'  => 'http://i2.api.weibo.com/2/friendships/followers/sort_interactive.json',
         //按粉丝数排序
@@ -304,7 +321,7 @@ function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
 
     if (!isset($sorts[$sort])) {
         //未指定排序
-        $sort = 'time';
+        $sort = 'api';
     }
 
     if ($size > 200) {
@@ -312,7 +329,7 @@ function s_user_followers_by($uid, $sort='time', $page=1, $size=20) {
     }
 
 
-    $key = "user_follower_by#{$uid}_{$sort}_{$size}_{$page}";
+    $key = "user_follower_by#uid={$uid}&sort={$sort}&size={$size}&page={$page}";
 
     if (false === ( $ret = s_memcache($key) )) {
         //缓存中没有，从微博平台中获取
@@ -414,11 +431,11 @@ function s_user_attention($uid, $sort=0, $page=1, $size=20) {
 
 
 //用户的双向关注的列表
-function s_user_friends($uid, $page=1, $size=20, $sort=0) {
+function s_user_friends($uid, $page=1, $size=20, $sort='api') {
     if (s_bad_id($uid)
         || s_bad_id($page)
         || s_bad_id($size)
-        || s_bad_0id($sort)
+        || s_bad_string($sort)
     ) {
         return false;
     }
@@ -432,6 +449,13 @@ function s_user_friends($uid, $page=1, $size=20, $sort=0) {
     $key = "user_friends_by_uid#{$uid}_{$type}_{$sort}_{$page}_{$size}";
 
     if (false === ( $ret = s_memcache($key) )) {
+        $urls = array(
+            //按关注时间
+            'api'   => "https://api.weibo.com/2/friendships/friends/bilateral.json",
+            //按活跃度
+            'hot'   => "https://api.weibo.com/2/friendships/friends/bilateral.json",
+        );
+
         if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/friends/bilateral.json", $data) )) {
             return false;
         }
@@ -505,6 +529,8 @@ function s_user_sample(&$users) {
 
 
 //发送私信（内部接口，外部禁用）
+//  必须用账号对应的appkey
+//  发送私信时，appkey对应的账号必须登录
 function s_user_message($uid, $message, $mid=false) {
     if (s_bad_id($uid)) {
         return false;

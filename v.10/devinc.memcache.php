@@ -64,21 +64,14 @@ function s_memcache_key(&$key) {
 
 
 //对memcached操作
-function s_memcache($key, &$value=false, $time=300, $replace=false) {
+function s_memcache($key, &$value=false, $time=300) {
     if (s_bad_string($key)) {
         return false;
     }
 
     $key = s_memcache_key($key);
 
-        echo "set";
-    if ($replace === true
-        && s_memcache_get($key) !== false
-    ) {
-        //替换操作
-        return s_memcache_reset($key, $value, $time);
-
-    } else if ($value === false) {
+    if ($value === false) {
         //获取memcache值
         return s_memcache_get($key);
 
@@ -117,27 +110,7 @@ function s_memcache_set($key, &$value, $time) {
         return false;
     }
 
-    //不做值存在检查，直接写
-    return $cache->add($key, $value, 0, $time);
-}
-
-
-//更新memcache值
-function s_memcache_reset($key, &$value, $time) {
-    if (s_bad_string($key)
-        || false === ( $cache = s_memcache_local() )
-    ) {
-        return false;
-    }
-
-    if ($time === false) {
-        //时间不替换
-        return $cache->replace($key, $value);
-
-    } else {
-        //时间也需要修改
-        return $cache->replace($key, $value, $time);
-    }
+    return $cache->set($key, $value, 0, $time);
 }
 
 

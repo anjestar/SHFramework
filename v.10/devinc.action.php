@@ -24,18 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_action_user($update=true, $checkref=true) {
-    //检查referer
-    if ($checkref === true) {
-        if (false === ( $ref = s_action_referer() )) {
-            //没有来源，有可能是非法请求或者是flash请求
-            return false;
-        }
-
-        if (false === ( $allows = function_exists('source_list') )) {
-        }
-    }
-
+function s_action_user($update=true) {
     //先从memcache中获取
     if (false === ( $sso = new SSOCookie('cookie.conf') )
         || false === ( $cookie = $sso->getCookie() )
