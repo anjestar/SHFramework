@@ -28,6 +28,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+function s_string_whtml(&$string) {
+    if (s_bad_string($string, $trim)) {
+        return false;
+    }
+
+    $string = s_string_subject($string);
+    $string = s_string_face($string);
+    $string = s_string_turl($string);
+    $string = s_string_at($string);
+
+    return $string;
+}
+
 //返回字符串长度
 function s_string_length($string, $trim=false) {
     if (s_bad_string($string, $string, $trim)) {

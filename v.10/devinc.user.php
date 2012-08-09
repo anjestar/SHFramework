@@ -196,6 +196,9 @@ function s_user_post(&$weibo) {
 
         } else if (0 === strpos($path, './')) {
             $weibo['pic'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 1);
+        } else {
+
+            $weibo['pic'] = '@' . $weibo['pic'];
         }
     }
 
@@ -299,59 +302,58 @@ function s_user_follow($suid, $tuid) {
 
 
 //用户的粉丝列表
-function s_user_followers_by($uid, $sort='api', $page=1, $size=20) {
+//  $sort   api     : 标准api
+//          time    : 联系时间排序
+//          follows : 粉丝数
+//          hot     : 粉丝活跃度
+//
+function s_user_followers_by($uid, $page=1, $size=20, $sort='api') {
     if (s_bad_id($uid)
         || s_bad_id($page)
         || s_bad_id($size)
         || s_bad_string($sort)
     ) {
-        return s_err_arg();
-    }
-
-    //不同的排列方式对应不同的接口地址
-    $sorts = array(
-        'api'   => 'https://api.weibo.com/2/friendships/followers.json',
-        //按联系时间排序
-        'time'  => 'http://i2.api.weibo.com/2/friendships/followers/sort_interactive.json',
-        //按粉丝数排序
-        'sum'   => 'http://i2.api.weibo.com/2/friendships/followers/sort_followers.json',
-        //按粉丝活跃度排序
-        'vigor' => 'http://api.t.sina.com.cn/friendships/followers/active.json',
-    );
-
-    if (!isset($sorts[$sort])) {
-        //未指定排序
-        $sort = 'api';
+        return false;
     }
 
     if ($size > 200) {
         $size = 200;
     }
 
-
     $key = "user_follower_by#uid={$uid}&sort={$sort}&size={$size}&page={$page}";
 
     if (false === ( $ret = s_memcache($key) )) {
-        //缓存中没有，从微博平台中获取
+        //不同的排列方式对应不同的接口地址
+        $urls = array(
+            'api'       => 'https://api.weibo.com/2/friendships/followers.json',
+            //按联系时间排序
+            'time'      => 'http://i2.api.weibo.com/2/friendships/followers/sort_interactive.json',
+            //按粉丝数排序
+            'follows'   => 'http://i2.api.weibo.com/2/friendships/followers/sort_followers.json',
+            //按粉丝活跃度排序
+            'hot'       => 'http://api.t.sina.com.cn/friendships/followers/active.json',
+        );
+
+        if (s_bad_string($urls[$sort], $url)) {
+            return false;
+        }
+
 
         $data = array();
         $data['uid']    = $uid;
         $data['page']   = $page;
         $data['count']  = $size;
 
-        if ( false === ( $ret = s_weibo_http($sorts[$sort], $data) )
-            || s_bad_array($ret['users'], $users)
-        ) {
+        if ( false === ( $ret = s_weibo_http($url, $data) )) {
             return false;
         }
-
 
         //缓存中存储起来（缓存5分钟）
         s_memcache($key, $ret, 300);
     }
 
     //返回处理之后的用户数据
-    return s_user_sample($ret['users']);
+    return $ret;
 }
 
 
@@ -453,16 +455,23 @@ function s_user_friends($uid, $page=1, $size=20, $sort='api') {
             //按关注时间
             'api'   => "https://api.weibo.com/2/friendships/friends/bilateral.json",
             //按活跃度
-            'hot'   => "https://api.weibo.com/2/friendships/friends/bilateral.json",
+            'hot'   => "https://api.weibo.com/2/friendships/friends.json",
         );
 
-        if ( false === ( $ret = s_weibo_http("https://api.weibo.com/2/friendships/friends/bilateral.json", $data) )) {
+        if (s_bad_string($urls[$sort], $url)) {
             return false;
         }
 
-        //缓存中存储起来
-        s_memcache($key, $ret);
+        if ($sort === 'api') {
+            $sort = 0;
+        }
 
+        if (false === ( $ret = s_weibo_http($url, $data) )) {
+            return false;
+        }
+
+        //缓存中存储起来10分钟
+        s_memcache($key, $ret, 60 * 10);
     }
 
     return $ret;
@@ -507,24 +516,6 @@ function s_user_ship($source, $target) {
     }
 
     return $ret;
-}
-
-
-function s_user_sample(&$users) {
-    if (s_bad_array($users)) {
-        return false;
-    }
-
-    foreach ($users as &$user) {
-        $user['id']         = $user['id'];
-        $user['name']       = $user['screen_name'];
-        $user['purl']       = $user['profile_image_url'];
-        $user['wurl']       = $user['profile_url'];
-
-        unset($user);
-    }
-
-    return $users;
 }
 
 
