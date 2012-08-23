@@ -114,9 +114,6 @@ function s_http_response($url, &$params=false, $method="get") {
 
     curl_close($curl);
 
-    //var_dump($params);
-    //var_dump($ret);
-
     return $ret;
 }
 
@@ -163,7 +160,8 @@ function _s_http_post2(&$curl, &$params) {
     $posts = array();
 
     foreach ($params as $name => &$value) {
-        $posts[] = $name . "=" . rawurlencode($value);
+        //$posts[] = $name . "=" . rawurlencode($value);
+        $posts[] = $name . "=" . urlencode($value);
 
         unset($value);
     }

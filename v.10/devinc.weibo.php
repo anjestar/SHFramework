@@ -298,6 +298,42 @@ function s_weibo_list_by_uid($uid, $page=1, $count=20) {
 }
 
 
+//返回微博列表数据（内部接口）
+//  wids        需要查找的微博主键，每次最多查询50个微博主键
+//  user        0，返回用户详情; 1，只返回用户主键
+//
+function s_weibo_list_by_wids($wids, $user=0) {
+    if (!is_array($wids)
+        || count($wids) > 50
+    ) {
+        return false;
+    }
+
+    $wids = implode(',', $wids);
+
+    //看cache中是否存在
+    $key = "weibos_list_by_wids#wids=" . $wids . "user=" . $user;
+
+    if (false === ( $ret = s_memcache($key) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            "ids"       => $wids,
+            "trim_user" => $user,
+        );
+
+        if (false === ( $ret = s_weibo_http('http://i2.api.weibo.com/2/statuses/show_batch.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来5分钟
+        s_memcache($key, $ret, 300);
+    }
+
+
+    return $ret['statuses'];
+}
+
+
 //返回带gps信息的微博数据，默认每页20条
 function s_weibo_gps_list_by_uid($uid, $page=1, $count=20) {
     if (s_bad_id($uid)
@@ -435,6 +471,102 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 
     return $list;
 }
+
+
+//转发列表（内部接口）
+function s_weibo_forwards($wid, $page=1, $size=20, $type='api') {
+    if (s_bad_id($wid)
+        || s_bad_id($page)
+        || s_bad_id($size)
+        || s_bad_string($type)
+    ) {
+        return false;
+    }
+
+
+    //看cache中是否存在
+    $mkey = "weibo_forwards#"
+        . 'wid='    . $wid
+        . 'page='   . $page
+        . 'size='   . $size
+        . 'type='   . $type;
+
+    if (false === ( $data = s_memcache($mkey) )) {
+        //缓存中没有，请求服务器
+        $params = array(
+            'id'        => $wid,
+            'page'      => $page,
+            'count'     => $size,
+        );
+
+
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/repost_timeline.json', $params) )) {
+            return false;
+        }
+
+        //缓存起来60秒
+        s_memcache($mkey, $data, 60);
+    }
+
+    return $data;
+}
+
+
+//微博关注列表微博主键
+function s_weibo_forward_ids($wid, $since_id=0, $max_id=0) {
+    if (s_bad_id($wid)
+        || s_bad_0id($max_id)
+        || s_bad_0id($since_id)
+    ) {
+        return false;
+    }
+
+    $page   = 1;        //当前页
+    $size   = 50;       //每页数
+    $ret    = array();
+
+    while ($page > 0) {
+        //看cache中是否存在
+        $mkey = "weibo_forward_ids#"
+            . 'wid='    . $wid
+            . 'page='   . $page
+            . 'size='   . $size
+            . 'max='    . $max_id
+            . 'since='  . $since_id;
+
+        if (false === ( $data = s_memcache($mkey) )) {
+            //缓存中没有，请求服务器
+            $params = array(
+                'id'        => $wid,
+                'page'      => $page,
+                'count'     => $size,
+                'max_id'    => $max_id,
+                'since_id'  => $since_id,
+            );
+
+            if (( $data = s_weibo_http('https://api.weibo.com/2/statuses/repost_timeline/ids.json', $params) )
+                && isset($data['statuses'])
+                && count($data['statuses'])
+            ) {
+                //缓存起来60秒
+                s_memcache($mkey, $data, 60);
+            }
+        }
+
+        if (isset($data['statuses'])
+            && count($data['statuses'])
+        ) {
+            //计算总页数
+            $ret = array_merge($ret, $data['statuses']);
+        }
+
+        $page = intval($data['next_cursor']);
+    }
+
+    //返回整个微博转发列表的微博主键
+    return $ret;
+}
+
 
 
 //搜索微博数据（内部接口）

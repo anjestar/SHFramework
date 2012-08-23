@@ -519,6 +519,60 @@ function s_user_ship($source, $target) {
 }
 
 
+//获取用户发布的微博列表
+//  $uid                        用户主键
+//  $type       forward, reply  返回的类别
+//  $since                      微博主键大于此微博
+//  $max                        微博主键小于此微博
+//
+function s_user_weibo_ids($uid, $type=0, $since=0, $max=0) {
+    if (s_bad_id($uid)
+        || s_bad_0id($max)
+        || s_bad_0id($since)
+        || s_bad_0id($type)
+    ) {
+        return false;
+    }
+
+
+    $page = 1;
+    $ret  = array();
+
+    while ($page > 0) {
+        $key = 'user_weibo_forward_ids_by#'
+            . 'uid='        . $uid
+            . 'type='       . $type
+            . 'since_id='   . $since
+            . 'max_id='     . $max;
+
+        if (false === ( $data = s_memcache($key) )) {
+            $param = array(
+                'uid'       => $uid,
+                'since_id'  => $since_id,
+                'max_id'    => $since_id,
+                'page'      => $page,
+                'feature'   => $type,
+            );
+
+            //if ( false === ( $data = s_weibo_http("http://i2.api.weibo.com/2/statuses/user_timeline/ids.json", $data) )) {
+            if ( false === ( $data = s_weibo_http("https://api.weibo.com/2/statuses/user_timeline/ids.json", $data) )) {
+                return false;
+            }
+
+            //缓存中存储30秒
+            s_memcache($key, $data, 30);
+        }
+
+        $ret = array_merge($ret, $data['statuses']);
+
+        $page = $data['next_cursor'];
+    }
+
+
+    return $ret;
+}
+
+
 //发送私信（内部接口，外部禁用）
 //  必须用账号对应的appkey
 //  发送私信时，appkey对应的账号必须登录

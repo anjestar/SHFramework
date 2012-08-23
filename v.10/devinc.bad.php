@@ -151,8 +151,13 @@ function s_bad_telphone($phone, &$var=false) {
 }
 
 
-//返回post值
-function s_bad_post($key, &$var=false, $type="string", $html=true) {
+//返回$_POST的值，如果对应的$key不存在，返回true，否则返回false。如指定$var变量，那么$key对应的值将赋给它
+// $key         $_POST的键
+// &$var        如$_POST存在，赋值
+// $type        $_POST值类型（string, int0, int, array, email, phone, telphone, mobile）
+// $escape      $_POST值是否需要转义（防止SQL注入）
+//                      
+function s_bad_post($key, &$var=false, $type="string", $escape=true) {
     if (s_bad_string($key)
         || !isset($_POST[$key])
     ) {
@@ -162,22 +167,16 @@ function s_bad_post($key, &$var=false, $type="string", $html=true) {
 
     if ($type === "string") {
         //字符类型
-        if ($html !== true) {
+        if (s_bad_string($_POST[$key], $var)) {
             //不需要转义，直接返回判断结果
-            return s_bad_string($_POST[$key], $var);
-        }
-
-        //需要对参数转义处理
-        if (true === s_bad_string($_POST[$key], $var)) {
-            //不需要转义，因为参数已经验证失败
             return true;
         }
 
-        if ($var !== false) {
+        //检查post值是否需要转义
+        if ($escape === true) {
             $var = s_safe_html($var);
         }
 
-        //验证成功，此处返回
         return false;
 
     } else if ($type === "int") {

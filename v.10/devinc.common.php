@@ -8,6 +8,7 @@ define('FRAMEWORK_DBPREFIX', 'sinash_framework');
 require_once(FRAMEWORK_DIR . '/devinc.bad.php');
 require_once(FRAMEWORK_DIR . '/devinc.log.php');
 require_once(FRAMEWORK_DIR . '/devinc.string.php');
+require_once(FRAMEWORK_DIR . '/devinc.cookie.php');
 
 require_once(FRAMEWORK_DIR . '/devinc.action.php');
 require_once(FRAMEWORK_DIR . '/devinc.smarty.php');
