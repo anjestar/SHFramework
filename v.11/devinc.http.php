@@ -65,7 +65,7 @@ function s_http_response($url, &$params=false, $method="get") {
     }
 
     if (isset($params['_password'])) {
-        $userpass = $userpass . ':' . $params['_username'];
+        $userpass = $userpass . ':' . $params['_password'];
     }
 
     if ($userpass) {
@@ -172,7 +172,8 @@ function _s_http_post2(&$curl, &$params) {
     $posts = array();
 
     foreach ($params as $name => &$value) {
-        $posts[] = $name . "=" . rawurlencode($value);
+        //$posts[] = $name . "=" . rawurlencode($value);
+        $posts[] = $name . "=" . urlencode($value);
 
         unset($value);
     }

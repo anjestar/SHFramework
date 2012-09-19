@@ -1,0 +1,101 @@
+-- MySQL dump 10.13  Distrib 5.5.22, for debian-linux-gnu (x86_64)
+--
+-- Host: localhost    Database: test
+-- ------------------------------------------------------
+-- Server version	5.5.22-0ubuntu1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `sinash_framework_bingo_config`
+--
+
+DROP TABLE IF EXISTS `sinash_framework_bingo_config`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sinash_framework_bingo_config` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '中奖表配置主键',
+
+  `name` varchar(256) NOT NULL DEFAULT '' COMMENT '项目名称',
+  `key` char(32) NOT NULL DEFAULT '' COMMENT '项目key',
+  `start` date NOT NULL DEFAULT '1970-01-01' COMMENT '中奖开始时间',
+  `stop` date NOT NULL DEFAULT '1970-01-01' COMMENT '中奖结束时间',
+  `odds` smallint(6) unsigned NOT NULL DEFAULT '0' COMMENT '中奖概率',
+  `sum` int(11) NOT NULL DEFAULT '0' COMMENT '奖品个数',
+
+  `uid` bigint(64) NOT NULL DEFAULT '0' COMMENT '用户主键',
+  `uname` varchar(125) NOT NULL DEFAULT '' COMMENT '用户名称',
+
+  `fdate` date NOT NULL DEFAULT '0000-00-00' COMMENT '添加日期-供日志系统使用',
+  `ftime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '添加时间-供日志系统使用',
+  `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '数据状态:0正常,1未中奖,2已中奖资料填写完毕',
+
+  PRIMARY KEY (`id`),
+  KEY `uuid` (`uid`),
+  UNIQUE KEY `ukey` (`key`),
+  UNIQUE KEY `fdate` (`fdate`),
+  KEY `ftime` (`ftime`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='hd duanyong@201205上海框架中奖表配置';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `sinash_framework_bingo_detail`
+--
+
+DROP TABLE IF EXISTS `sinash_framework_bingo_detail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sinash_framework_bingo_detail` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '中奖主键',
+  `key` char(32) NOT NULL DEFAULT '' COMMENT '中奖Key',
+  `code` char(32) NOT NULL DEFAULT '' COMMENT '中奖代码',
+  `name` varchar(128) NOT NULL DEFAULT '' COMMENT '中奖代码的名称',
+
+
+  `mid` bigint(64) unsigned NOT NULL DEFAULT '0' COMMENT '微博主键，微博系统',
+  `uid` bigint(64) unsigned NOT NULL DEFAULT '0' COMMENT '用户主键',
+  `uname` varchar(125) NOT NULL DEFAULT '' COMMENT '用户名称',
+
+  `source` varchar(125) NOT NULL DEFAULT '' COMMENT '来源页面',
+  `email` varchar(128) NOT NULL DEFAULT '' COMMENT '中奖代码的邮箱',
+  `address` varchar(256) NOT NULL DEFAULT '' COMMENT '中奖人地址',
+  `postcode` char(6) NOT NULL DEFAULT '000000' COMMENT '中奖人邮编',
+  `phone` varchar(32) NOT NULL DEFAULT '' COMMENT '中奖人电话',
+
+  `time` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '中奖时间',
+  `utime` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '用户取消奖品时间',
+  `date` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '预计中奖时间',
+
+  `memo0` varchar(1024) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo1` varchar(1024) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo2` varchar(1024) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo3` varchar(1024) NOT NULL DEFAULT '' COMMENT '备注',
+  `memo4` varchar(1024) NOT NULL DEFAULT '' COMMENT '备注',
+
+  `fdate` date NOT NULL DEFAULT '0000-00-00' COMMENT '添加日期-供日志系统使用',
+  `ftime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '添加时间-供日志系统使用',
+  `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '数据状态:0正常,1未中奖,2已中奖资料填写完毕',
+
+  PRIMARY KEY (`id`),
+
+  KEY `imid` (`mid`),
+  KEY `iuid` (`uid`),
+  KEY `isource` (`source`),
+
+  KEY `ikey` (`key`),
+  KEY `icode` (`code`),
+
+  KEY `fdate` (`fdate`),
+  KEY `ftime` (`ftime`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='hd duanyong@201205上海框架中奖详情表';
+/*!40101 SET character_set_client = @saved_cs_client */;
