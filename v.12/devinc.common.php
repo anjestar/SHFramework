@@ -3,6 +3,7 @@
 define('FRAMEWORK_DIR', dirname(__FILE__));
 
 define('FRAMEWORK_DBPREFIX', 'sinash_framework');
+define("SINA_UPLOAD_DIR",       $_SERVER['SINASRV_NDATA_CACHE_URL']);
 
 
 require_once(FRAMEWORK_DIR . '/devinc.bad.php');
