@@ -429,6 +429,10 @@ function _s_db_update($table, &$v1, &$v2) {
         $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_safe_value($value) . '"' : $value );
     }
 
+    if (empty($values)) {
+        return true;
+    }
+
     $sql  = "update `{$table}` set " . implode(", ", $values) . " where `id`={$pid}";
 
     return s_db_exec($sql);

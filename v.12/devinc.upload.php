@@ -25,44 +25,56 @@
 
 require_once("VFS/VFS/dpool_storage.php");
 
-
-function s_upload_url($name, $size=2000, $types=false) {
+function s_upload_url($name, $size=false, $types=false) {
     if (!( $file = s_upload_file($name) )) {
         return false;
     }
 
     //生成目录
-    $dir    = SINA_UPLOAD_DIR . date('Y-m-d') . s_action_time() .  srand((double) microtime() * 1000000);
+    $dir    = 'shframework/' . date('Y-m-d') . '/';
     //生成文件名
-    $fname  = md5($dir . $file['name']) . substr($file['type'], strrpos('/', $file['type']));
+
+    //原生的扩展名不行，一定需要换成jpg的
+    //$fname  = md5($dir . $file['name']) . '.' . substr($file['type'], strpos($file['type'], '/') + 1);
+    $fname  = s_action_time() . md5($dir . $file['name']) . '.jpg';
 
 	$vfs    = new VFS_dpool_storage();	
 	$ret    = $vfs->write($dir, $fname, $file['tmp_name'], true);
 
     //检查是否正确
-	if (is_a($ret, "PEAR_Error")) {			
+	if (is_a($ret, "PEAR_Error")) {
+        var_dump($ret);
 	    return false;
     }
 
-    return $dir . $fname;
+    return SINA_UPLOAD_DIR . $dir . $fname;
 }
 
 
-function s_upload_file($name, $size=2000, $types=false) {
-    if (!isset($_FILES[$name]['tmp_name'])
+function s_upload_file($name, $size=false, $types=false) {
+    if (!isset($_FILES[$name])
         || $_FILES[$name]['error'] > 0
+
+        || !isset($_FILES[$name]['tmp_name'])
         || !is_uploaded_file($_FILES[$name]['tmp_name'])
     ) {
         return false;
     }
 
+
     $file = $_FILES[$name];
 
-    if ($file['size'] > $size) {
+    if ($size
+        && $file['size'] > ( $size * ( 1 << 20 ) )
+    ) {
         return false;
     }
 
-        //不在数组中
+    if ($types === false) {
+        //不做类型检查
+        return $file;
+    }
+
     if (is_array($types)
         && !in_array($file['type'], $types)
     ) {

@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params=false, $method="get") {
+function s_http_response($url, &$params=false, $method="get", $auto=true) {
     if (s_bad_string($url)) {
         return false;
     }
@@ -43,38 +43,42 @@ function s_http_response($url, &$params=false, $method="get") {
         curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
     }
 
-    if (isset($params["cookie"])) {
-        //有cookie
-        $arr = array();
+    if ($auto === true) {
+        //只有本站内应用才携带COOKIE
 
-        foreach($params["cookie"] as $key => $value) {
-            $arr[] = $key . "=" . rawurlencode($value);
+        if (isset($params["cookie"])) {
+            //有cookie
+            $arr = array();
+
+            foreach($params["cookie"] as $key => $value) {
+                $arr[] = $key . "=" . rawurlencode($value);
+            }
+
+            curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
+
+            unset($params["cookie"]);
         }
 
-        curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
+        ////////////////////////////////////////////////////////////////////////////////
+        //特殊变量（_username,和_password)，用于给http添加用户名及密码
+        //
+        $userpass = "";
+        if (isset($params['_username'])) {
+            $userpass = $params['_username'];
+        }
 
-        unset($params["cookie"]);
+        if (isset($params['_password'])) {
+            $userpass = $userpass . ':' . $params['_password'];
+        }
+
+        if ($userpass) {
+            //有用户名与密码添加到http头部
+            curl_setopt($curl, CURLOPT_USERPWD, $userpass);
+        }
+
+        //
+        ////////////////////////////////////////////////////////////////////////////////
     }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    //特殊变量（_username,和_password)，用于给http添加用户名及密码
-    //
-    $userpass = "";
-    if (isset($params['_username'])) {
-        $userpass = $params['_username'];
-    }
-
-    if (isset($params['_password'])) {
-        $userpass = $userpass . ':' . $params['_password'];
-    }
-
-    if ($userpass) {
-        //有用户名与密码添加到http头部
-        curl_setopt($curl, CURLOPT_USERPWD, $userpass);
-    }
-
-    //
-    ////////////////////////////////////////////////////////////////////////////////
 
 
     //将余下的post字段添加到http请求中
@@ -122,9 +126,6 @@ function s_http_response($url, &$params=false, $method="get") {
     $ret = curl_exec($curl);
 
     curl_close($curl);
-
-    //var_dump($params);
-    //var_dump($ret);
 
     return $ret;
 }
@@ -184,7 +185,7 @@ function _s_http_post2(&$curl, &$params) {
 }
 
 
-function s_http_get($url, &$params=false) {
+function s_http_get($url, &$params=false, $auto=true) {
     if (s_bad_string($url)
         || false === ( $response = s_http_response($url, $params, "get") )
     ) {
@@ -195,9 +196,9 @@ function s_http_get($url, &$params=false) {
 }
 
 
-function s_http_post($url, &$params=false) {
+function s_http_post($url, &$params=false, $auto=true) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, "post") )
+        || false === ( $response = s_http_response($url, $params, "post", $auto) )
     ) {
         return false;
     }
@@ -206,9 +207,9 @@ function s_http_post($url, &$params=false) {
 }
 
 
-function s_http_json($url, &$params=false, $method="get") {
+function s_http_json($url, &$params=false, $method="get", $auto=true) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, $method) )
+        || false === ( $response = s_http_response($url, $params, $method, $auto) )
     ) {
         return false;
     }

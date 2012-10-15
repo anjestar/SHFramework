@@ -354,6 +354,9 @@ function s_user_followers_by($uid, $page=1, $size=20, $sort='api') {
         s_memcache($key, $ret, 300);
     }
 
+    $ret['users'] = s_user_sample($ret['users']);
+
+
     //返回处理之后的用户数据
     return $ret;
 }
