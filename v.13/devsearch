@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#方便搜索用的小脚本
+
+DIR=$PWD/$0
+DIR=${DIR%/*}
+
+cd $DIR
+
+
+#grep -inR \
+#    --exclude-dir="ajax" \
+#    --exclude-dir="cache" \
+#    --exclude-dir="dev" \
+#    --exclude-dir=".templates_c" \
+#    --include="*.tpl" \
+#    --include="*.php" \
+#    --include="dev.*.js" \
+#    --include="dev.*.css" \
+#	--color=always \
+#    -e "$1" .
+
+grep -inR \
+    --exclude="ajax" \
+    --exclude="cache" \
+    --exclude=".templates_c" \
+    --include="*.tpl" \
+    --include="*.php" \
+    --include="dev.*.js" \
+    --include="dev.*.css" \
+	--color=always \
+    -e "$1" .
+
