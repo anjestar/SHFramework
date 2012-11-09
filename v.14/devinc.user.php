@@ -333,7 +333,7 @@ function s_user_followers_by($uid, $page=1, $size=20, $sort='api') {
             //按粉丝数排序
             'follows'   => 'http://i2.api.weibo.com/2/friendships/followers/sort_followers.json',
             //按粉丝活跃度排序
-            'hot'       => 'https://api.weibo.com/2/friendships/friends.json',
+            'hot'       => 'http://api.t.sina.com.cn/friendships/followers/active.json',
         );
 
         if (s_bad_string($urls[$sort], $url)) {
