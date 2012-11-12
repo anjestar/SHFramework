@@ -128,7 +128,7 @@ function s_action_ip() {
 
 //返回http的referer
 function s_action_referer() {
-    return $_SERVER['referer'];
+    return $_SERVER['HTTP_REFERER'];
 }
 
 
