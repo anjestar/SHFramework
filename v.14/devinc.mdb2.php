@@ -417,7 +417,7 @@ function _s_db_update($table, &$v1, &$v2) {
     }
 
     // 防止有重复的值
-    $v2 = array_unique($v2);
+    //$v2 = array_unique($v2);
 
     // 对$v1和$v2数据归类
     $values = array();

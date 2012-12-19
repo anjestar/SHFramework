@@ -85,6 +85,7 @@ function &s_db_slink() {
         'charset'  => 'utf8',
     );
 
+
 	$db = MDB2::connect($dsn);
 	if (MDB2::isError($db)) {
         die(s_err_sql($db->getMessage()));
@@ -301,7 +302,7 @@ function s_db($table, &$v1, $v2=false) {
 
     } else if ($action === "delete") {
         // 删除
-        $ret = _s_db_delete($table, $v1);
+        $ret = _s_db_delete($table, $v1, $v2);
     }
 
 
@@ -396,6 +397,10 @@ function _s_db_insert($table, &$data) {
 
 // 更新数据，其中$v1是原始数据（包含主键字段id），$v2是需更新的字段，其中不能包括主键
 function _s_db_update($table, &$v1, &$v2) {
+    if (is_int($v1)) {
+        $v1 = s_db($table, $v1);
+    }
+
     if (s_bad_string($table)
         || s_bad_array($v1)
         || s_bad_array($v2)
@@ -417,16 +422,14 @@ function _s_db_update($table, &$v1, &$v2) {
     }
 
     // 防止有重复的值
-    $v2 = array_unique($v2);
+    //$v2 = array_unique($v2);
 
     // 对$v1和$v2数据归类
     $values = array();
     foreach ($v2 as $key => $value) {
-        if ($v1[$key] == $v2[$key]) {
-            continue;
+        if ($v1[$key] != $v2[$key]) {
+            $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_safe_value($value) . '"' : $value );
         }
-
-        $values[] = "`{$key}`=" . ( is_string($value) ? '"' . s_safe_value($value) . '"' : $value );
     }
 
     if (empty($values)) {
@@ -440,7 +443,7 @@ function _s_db_update($table, &$v1, &$v2) {
 
 
 
-function _s_db_delete($table, $v1) {
+function _s_db_delete($table, $v1, $v2=false) {
     if (s_bad_string($table, $table, true)
         //是数组取主键值
         || !( $v1 = ( is_array($v1) && isset($v1["id"]) ) ? intval($v1["id"]) : $v1 )
@@ -449,12 +452,18 @@ function _s_db_delete($table, $v1) {
         return s_err_arg();
     }
 
+    if ($v2 === false
+        || $v2 !== intval($v2)
+    ) {
+        $v2 = -99;
+    }
+
 
     if (defined("APP_DB_PREFIX")) {
         //替换表名:"%s_user:update" => "201204disney_user:update"
         $table = sprintf($table, APP_DB_PREFIX, true);
     }
-    $sql  = "update `{$table}` set `status`=-1 where `id`= {$v1}";
+    $sql  = "update `{$table}` set `status`={$v2} where `id`= {$v1}";
 
     return s_db_exec($sql);
 }
