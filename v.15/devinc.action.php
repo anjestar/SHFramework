@@ -97,19 +97,20 @@ function s_action_is_ajax() {
     @$_SERVER[ 'HTTP_X_REQUESTED_WITH' ] === 'XMLHttpRequest';
 }
 
-//显示出错信息
-function s_action_error($message="no params.", $code=99, $tpl="/error.tpl") {
+//显示出错信息，利用/ERROR.tpl（通用错误处理模板）显示用户信息
+function s_action_error($message="no params.", $code=99, $url=false) {
     //非ajax状态输出json格式
-    $error = array(
+    $msg = array(
+        'url'       => $url ? $url : '/',
         'error'     => $code,
         'errmsg'    => $message,
     );
 
     if (s_action_is_ajax() === "ajax") {
-        return s_action_json($error);
+        return s_action_json($msg);
 
     } else {
-        return s_action_page($error, $tpl);
+        return s_action_page($msg, '/error.tpl');
     }
 }
 
@@ -169,10 +170,10 @@ function s_action_page($assign=false, $tpl=false) {
 
         //截取php文件，得到tpl文件
         $tpl .= '.tpl';
-    }
 
-    if (strpos($tpl, '/') !== 0) {
-        //相对路径
+    } else if (strpos($tpl, '/') === 0) {
+        //绝对路径
+        $tpl = $_SERVER['DOCUMENT_ROOT'] . $tpl;
     }
 
     return s_smarty($tpl, $assign);

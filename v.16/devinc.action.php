@@ -128,7 +128,7 @@ function s_action_ip() {
 
 //返回http的referer
 function s_action_referer() {
-    return $_SERVER['referer'];
+    return $_SERVER['HTTP_REFERER'];
 }
 
 
@@ -137,18 +137,26 @@ function s_action_source() {
     return $_SERVER['referer'];
 }
 
-function s_action_error($message="no params.", $code=99, $type="json") {
-    $error = array(
+//判断是否是JQuery提供的ajax请求
+function s_action_is_ajax() {
+    @$_SERVER[ 'HTTP_X_REQUESTED_WITH' ] === 'XMLHttpRequest';
+}
+
+//显示出错信息，利用/ERROR.tpl（通用错误处理模板）显示用户信息
+function s_action_error($message="no params.", $code=99, $url=false) {
+    //非ajax状态输出json格式
+    $msg = array(
+        'url'       => $url ? $url : '/',
         'error'     => $code,
         'errmsg'    => $message,
     );
 
-    //if ($type === "josn") {
-        s_action_json($error);
+    if (s_action_is_ajax() === "ajax") {
+        return s_action_json($msg);
 
-    //} else if ($type === 'xml') {
-        //s_action_xml($error);
-    //}
+    } else {
+        return s_action_page($msg, '/error.tpl');
+    }
 }
 
 
@@ -180,6 +188,20 @@ function s_action_redirect($url, $delay=0, $msg=false) {
 }
 
 
+//返回json格式
+function s_action_json($data) {
+    if ($data === false) {
+        //多半是直接函数调用后返回的false
+        $data = array(
+            'error'     => 100,
+            'errmsg'    => '参数错误',
+        );
+    }
+
+    echo json_encode($data);
+}
+
+
 //返回tpl文件
 function s_action_page($assign=false, $tpl=false) {
     if ($tpl === false) {
@@ -193,77 +215,11 @@ function s_action_page($assign=false, $tpl=false) {
 
         //截取php文件，得到tpl文件
         $tpl .= '.tpl';
-    }
 
-    if (strpos($tpl, '/') !== 0) {
-        //相对路径
+    } else if (strpos($tpl, '/') === 0) {
+        //绝对路径
+        $tpl = $_SERVER['DOCUMENT_ROOT'] . $tpl;
     }
-
 
     return s_smarty($tpl, $assign);
-}
-
-
-//返回一个临时文件，此文件只针对当前进程。
-function s_action_file($path=false) {
-    if ($path === false) {
-        //随机产生一个文件
-        $path = s_action_time() . '_' . rand();
-    }
-
-    if (substr($path, 0, 1) !== '/') {
-        //非绝对路径，处理成绝对路径
-        if (false === ( $dir = s_action_dir() )
-            || s_bad_string($dir['dir'], $dir)
-        ) {
-            //获取默认临时目录失败
-            return false;
-        }
-
-        //生成绝对路径
-        $path = $dir['dir'] . $path;
-    }
-
-
-    //清空已存在的文件
-    return false === file_put_contents($path, '') ? false : $path;
-}
-
-
-//返回一个临时目录，此目录只针对当前进程。
-function s_action_dir($path=false, $mask=0755) {
-    if ($path === false) {
-        $path = defined('APP_NAME') ? APP_NAME : 'tmp';
-    }
-
-    if (s_bad_string($path)) {
-        return false;
-    }
-
-    $real = false;
-    //检查是否为绝对路径
-    if (substr($path, 0, 1) !== '/') {
-        //非绝对路径自动添加项目前缀
-        if (isset($_SERVER["SINASRV_CACHE_DIR"])) {
-            $real = $_SERVER["SINASRV_CACHE_DIR"] . $path;
-        }
-
-    } else {
-        //绝对路径
-        $real = $path;
-    }
-
-
-    if (!is_dir($real)
-        && !mkdir($real, $mask, true)
-    ) {
-        return false;
-    }
-
-    return array(
-        // /data1/www/cache/all.vic.sina.com.cn/disney
-        // http://all.vic.sina.com.cn/cache
-        "url" => $_SERVER["SINASRV_CACHE_URL"] . "/" . $path,
-        "dir" => $_SERVER["SINASRV_CACHE_DIR"] . $path,
-    );
 }
