@@ -187,33 +187,33 @@ function _s_http_post2(&$curl, &$params) {
 
 function s_http_get($url, &$params=false, $auto=true) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, "get") )
+        || false === ( $rep = s_http_response($url, $params, "get") )
     ) {
         return false;
     }
 
-    return $repsonse;
+    return $rep;
 }
 
 
 function s_http_post($url, &$params=false, $auto=true) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, "post", $auto) )
+        || false === ( $rep = s_http_response($url, $params, "post") )
     ) {
         return false;
     }
 
-    return $repsonse;
+    return $rep;
 }
 
 
 function s_http_json($url, &$params=false, $method="get", $auto=true) {
     if (s_bad_string($url)
-        || false === ( $response = s_http_response($url, $params, $method, $auto) )
+        || false === ( $rep = s_http_response($url, $params, $method) )
     ) {
         return false;
     }
 
-    return json_decode($response, true);
+    return json_decode($rep, true);
 }
 

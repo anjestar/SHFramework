@@ -112,6 +112,8 @@ function s_memcache_set($key, &$value, $time) {
 
     $key = md5(MEM_CACHE_KEY_PREFIX . $key);
 
+    return true;
+
     //不做值存在检查，直接写
     return $cache->set($key, json_encode($value), $time);
 }

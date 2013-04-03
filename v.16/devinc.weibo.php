@@ -194,15 +194,26 @@ function s_weibo_http($url, $params=false, $method="get") {
         $params = array();
     }
 
-    //添加COOKIE
-    $params["cookie"]["SUE"] = $_COOKIE["SUE"];
-    $params["cookie"]["SUP"] = $_COOKIE["SUP"];
+    //添加用户COOKIE
+    if (isset($_COOKIE['SUE'])) {
+        $params["cookie"]["SUE"] = $_COOKIE["SUE"];
+    }
 
-        //添加APPKEY
-    if (isset($params['_APP_KEY'])) {
-        $params["source"] = $params['_APP_KEY'];
+    if (isset($_COOKIE['SUP'])) {
+        $params["cookie"]["SUP"] = $_COOKIE["SUP"];
+    }
 
-    } else {
+
+    if (isset($params['token'])) {
+        //采用oauth2验证
+        $params["access_token"] = $params['token'];
+
+    } else if (isset($params['APP_KEY'])) {
+        //指定自己的APPKEY
+        $params["source"] = $params['APP_KEY'];
+
+    } else if (defined('APP_KEY')) {
+        //采用系统指定的APP_KEY（dev/devinc.common.php指定）
         $params["source"] = APP_KEY;
     }
 

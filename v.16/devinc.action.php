@@ -155,7 +155,8 @@ function s_action_error($message="no params.", $code=99, $url=false) {
         return s_action_json($msg);
 
     } else {
-        return s_action_page($msg, '/error.tpl');
+        //return s_action_page($msg, '/error.tpl');
+        return s_action_json($msg, '/error.tpl');
     }
 }
 
@@ -185,20 +186,6 @@ function s_action_redirect($url, $delay=0, $msg=false) {
     }
 
     return s_action_json(array('error' => 1, 'redirect' => $url));
-}
-
-
-//返回json格式
-function s_action_json($data) {
-    if ($data === false) {
-        //多半是直接函数调用后返回的false
-        $data = array(
-            'error'     => 100,
-            'errmsg'    => '参数错误',
-        );
-    }
-
-    echo json_encode($data);
 }
 
 
