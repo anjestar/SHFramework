@@ -27,7 +27,7 @@
 require("SinaService/SinaStorageService/SinaStorageService.php");
 
 //上传内容到S3中
-function s_s3_upload($path, &$content
+function s_s3_upload($path, &$content,
             //文件类型
             $type='image/unknown',
             //域（上传到某个域下）

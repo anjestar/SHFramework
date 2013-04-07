@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params=false, $method="get") {
+function s_http_response($url, &$params=false, $method="get", $mutil=false, $cookie=false, $header=false, $userpwd=false) {
     if (s_bad_string($url)) {
         return false;
     }
@@ -32,157 +32,124 @@ function s_http_response($url, &$params=false, $method="get") {
         $params = array();
     }
 
+    if ($header === false) {
+        $header = array();
+    }
+
 
     $curl = curl_init();
 
-    curl_setopt($curl, CURLOPT_HEADER, 0);
-    curl_setopt($curl, CURLOPT_VERBOSE, 0);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_HEADER,          FALSE);
+    curl_setopt($curl, CURLOPT_VERBOSE,         FALSE);
+    curl_setopt($curl, CURLINFO_HEADER_OUT,     TRUE);
+    curl_setopt($curl, CURLOPT_HTTP_VERSION,    CURL_HTTP_VERSION_1_0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER,  TRUE);
+
+
+    if ($userpwd) {
+        //有用户名与密码添加到http头部
+        curl_setopt($curl, CURLOPT_USERPWD, $userpwd);
+    }
+
+    if (isset($_SERVER['HTTP_REFERER'])) {
+        curl_setopt($curl, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
+    }
 
     if (isset($_SERVER['HTTP_USER_AGENT'])) {
         curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
     }
 
-    if (isset($params["cookie"])) {
-        //有cookie
-        $arr = array();
 
-        foreach($params["cookie"] as $key => $value) {
+    if ($cookie === true) {
+        //携带cookie
+        foreach($_COOKIE as $key => $value) {
             $arr[] = $key . "=" . rawurlencode($value);
         }
 
-        curl_setopt($curl, CURLOPT_COOKIE, implode(";", $arr)); 
-
-        unset($params["cookie"]);
+        $header[] = 'Cookie: ' .  implode('; ', $arr);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-    //特殊变量（_username,和_password)，用于给http添加用户名及密码
-    //
-    $userpass = "";
-    if (isset($params['_username'])) {
-        $userpass = $params['_username'];
-    }
-
-    if (isset($params['_password'])) {
-        $userpass = $userpass . ':' . $params['_password'];
-    }
-
-    if ($userpass) {
-        //有用户名与密码添加到http头部
-        curl_setopt($curl, CURLOPT_USERPWD, $userpass);
-    }
-
-    //
-    ////////////////////////////////////////////////////////////////////////////////
 
 
-    //将余下的post字段添加到http请求中
-    $arr = array();
-
-    if ($method === "get") {
-        //GET
-        foreach ($params as $key => &$value) {
-            if (is_scalar($value)) {
-                $arr[] = $key . "=" . rawurlencode($value);
+    switch(strtolower($method)) {
+        case 'get':
+            if (false === strpos('?', $url)) {
+                $url .= '?';
             }
 
-            unset($value);
-        }
+            $url .= '&' . http_build_query($params);
 
-        $url .= ( strrpos($url, "?") === false ? "?" : "" ) . implode("&", $arr);
+            break;
 
-    } else if ($method === "post") {
-        //POST
-        curl_setopt($curl, CURLOPT_POST, 1);
-
-        if (isset($params["_name"])
-            && isset($params["_data"])
-        ) {
-            //有图片数据提交
-            _s_http_post1($curl, $params);
-
-        } else {
-            //简单数据提交
-            _s_http_post2($curl, $params);
-        }
+        default:
+            curl_setopt($curl, CURLOPT_POSTFIELDS, s_http_boundary($params, $header));
     }
 
-    //设置问部referer
-    $referer = '';
 
-    if (isset($_SERVER['HTTP_REFERER'])) {
-        $referer = $_SERVER['HTTP_REFERER'];
-    }
-
-    curl_setopt($curl, CURLOPT_REFERER, $referer);
 
     //加载URL
-    curl_setopt($curl, CURLOPT_URL, $url);
-    $ret = curl_exec($curl);
+    curl_setopt($curl, CURLOPT_URL,             $url);
+    curl_setopt($curl, CURLOPT_HTTPHEADER,      $headers);
+
+    $ret    = curl_exec($curl);
+    $code   = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    $info   = curl_getinfo($curl);
 
     curl_close($curl);
 
-    //var_dump($params);
-    //var_dump($ret);
+    if ($params['debugger'] === true) {
+        echo "\nresponse:\n";
+        var_dump($ret);
+
+        echo "\ncode:\n";
+        var_dump($code);
+
+        echo "\ninfo:\n";
+        var_dump($code);
+    }
 
     return $ret;
 }
 
 
-function _s_http_post1(&$curl, &$params) {
-    $boundary = uniqid('------------------');
-
-    $start    = '--' . $boundary;
-    $end      = $start . '--';
-    $body     = '';
-
-    //图片数据有$params["_name"]和$params["_data"]变量
-    $mpheader = array("Content-Type: multipart/form-data; boundary={$boundary}" , "Expect: ");
-    curl_setopt($curl, CURLOPT_HTTPHEADER, $mpheader);
-
-    //二进制数据（图片）
-    $body .= $start . "\r\n";
-    $body .= 'Content-Disposition: form-data; name="' . $params["_name"] . '"; filename="wiki.jpg"' . "\r\n";
-    $body .= 'Content-Type: image/jpg'. "\r\n\r\n";
-    $body .= $params["_data"] . "\r\n";
-
-
-    unset($params["_name"]);
-    unset($params["_data"]);
-
-
-    //余下就是一般字符串数据
-    foreach ($params as $name => &$value) {
-        //一般字符串
-        $body .= $start . "\r\n";
-        $body .= 'Content-Disposition: form-data; name="' . $name . '"' . "\r\n\r\n";
-        $body .= $value . "\r\n";
-
-        unset($value);
+function s_http_boundary(&$params, &$header) {
+    if (!is_array($params)) {
+        $params = array();
     }
 
-    $body .= "\r\n". $end;
-
-    curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
-}
-
-
-function _s_http_post2(&$curl, &$params) {
-    $posts = array();
-
-    foreach ($params as $name => &$value) {
-        //$posts[] = $name . "=" . rawurlencode($value);
-        $posts[] = $name . "=" . urlencode($value);
-
-        unset($value);
+    if (!is_array($header)) {
+        $header = array();
     }
 
-    curl_setopt($curl, CURLOPT_POSTFIELDS, implode("&", $posts));
 
-    unset($posts);
+    $header[] = "Content-Type: multipart/form-data; boundary={$boundary}";
+
+    uksort($params, 'strcmp');
+
+
+    $body           = '';
+    $boundary       = uniqid('------------------');
+    foreach ($params as $key => $value) {
+        if(in_array($key, array('pic', 'image')) && $value{0} == '@') {
+            $content    = file_get_contents(ltrim($value, '@'));
+
+            $body       .= '--' . $boundary . "\r\n";
+            $body       .= 'Content-Disposition: form-data; name="' . $key . '"; filename="' . basename($value) . '"'. "\r\n";
+            $body       .= "Content-Type: image/unknown\r\n\r\n";
+            $body       .= $content. "\r\n";
+
+        } else {
+            $body       .= '--' . $boundary . "\r\n";
+            $body       .= 'content-disposition: form-data; name="' . $key . "\"\r\n\r\n";
+            $body       .= $value."\r\n";
+        }
+    }
+
+    //end
+    $body .= '--' . $boundary . '--';
+
+    return $body;
 }
-
 
 function s_http_get($url, &$params=false) {
     if (s_bad_string($url)

@@ -189,7 +189,7 @@ function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
 
 
 //返回以json格式的weibo数据，此处为做error_code检查
-function s_weibo_http($url, $params=false, $method="get") {
+function s_weibo_http($url, $params=false, $method="get", $mutil=false) {
     if (false === $params) {
         $params = array();
     }
@@ -217,52 +217,8 @@ function s_weibo_http($url, $params=false, $method="get") {
         $params["source"] = APP_KEY;
     }
 
-
-    //上传图片。有两种情况
-    //  1、@/image/web.jpg
-    //  2、图片数据
-    //
-    if (isset($params["pic"])
-        && is_string($params["pic"])
-    ) {
-        //检查数据是二进制文件还是路径
-        $params["_name"] = "pic";
-
-        if ( substr($params["pic"], 0, 1) === '@' ) {
-            //@是路径
-            $params["_data"] = file_get_contents(substr($params["pic"], 1));
-
-        } else {
-            //直接使用
-            $params["_data"] = $params["pic"];
-        }
-
-
-        unset($params["pic"]);
-    }
-
-    //上传头像
-    if (isset($params["image"])
-        && is_string($params["image"])
-    ) {
-        //检查数据是二进制文件还是路径
-        $params["_name"] = "image";
-
-        if ( substr($params["image"], 0, 1) === '@' ) {
-            //@是路径
-            $params["_data"] = file_get_contents(substr($params["image"], 1));
-
-        } else {
-            //是图片数据
-            $params["_data"] = $params["image"];
-        }
-
-        unset($params["image"]);
-    }
-
-
     //有一些错误码不需要返回false
-    if (false === ( $data = s_http_json($url, $params, $method) )
+    if (false === ( $data = s_http_response($url, $params, $header, $method, $mutil) )
         || isset($data['error'])
         || isset($data['error_code'])
     ) {

@@ -175,12 +175,6 @@ function s_users_by_uids(&$uids, $encoded=false) {
 //      3、由flash上传的图片数据
 //
 function s_user_post(&$weibo) {
-    if (is_string($weibo)) {
-        $weibo = array(
-            "status" => $weibo,
-        );
-    }
-
     if (s_bad_array($weibo)
         || s_bad_string($weibo["status"])
     ) {
@@ -188,33 +182,16 @@ function s_user_post(&$weibo) {
     }
 
 
-    //对图片是否绝对路径
-    if (!s_bad_string($weibo['pic'], $path)) {
-        //以@./相对路径开头
-        if (0 === strpos($path, '@./')) {
-            $weibo['pic'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 2);
-
-        } else if (0 === strpos($path, './')) {
-            $weibo['pic'] = '@' . $_SERVER['DOCUMENT_ROOT'] . '/' . APP_NAME . substr($path, 1);
-        } else {
-
-            //$weibo['pic'] = '@' . $weibo['pic'];
-            //给flash应用用的
-            $weibo['pic'] = $weibo['pic'];
-        }
-    }
-
-    if (isset($weibo["pic"])) {
+    if (isset($weibo['pic'])) {
         //发图片微博
         $url = "http://upload.api.weibo.com/2/statuses/upload.json";
 
     } else {
         //发文字微博
         $url = "https://api.weibo.com/2/statuses/update.json";
-
     }
 
-    return s_weibo_http($url, $weibo, "post");
+    return s_weibo_http($url, $weibo, "post", !empty($weibo['pic']));
 }
 
 
