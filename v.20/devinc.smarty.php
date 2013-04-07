@@ -11,13 +11,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-require_once(FRAMEWORK_DIR . '/dev/smarty/Smarty.class.php');
+require_once(SHF_DIR . '/dev/smarty/Smarty.class.php');
 
 function s_smarty_object() {
     //生成新的Smarty对象
 
     $smarty = new Smarty();
-    $smarty->addPluginsDir(FRAMEWORK_DIR . '/dev/smarty/userplugins');
+    $smarty->addPluginsDir(SHF_DIR . '/dev/smarty/userplugins');
 
     $smarty_temp = $_SERVER['SINASRV_CACHE_DIR'] . ( defined('APP_NAME') ? APP_NAME : 'smarty_autocreate' );
 
