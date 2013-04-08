@@ -51,16 +51,20 @@ function s_user_by_uid($uid, $sample=true) {
         return false;
     }
 
-	$key = "user_by_uid#" . $uid;
+	$key    = "user_by_uid#" . $uid;
 
     if (false === ( $ret = s_memcache($key) )) {
-        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", array('uid' => $uid)) )) {
+        $param  = array('uid' => $uid);
+
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $param) )) {
             return s_err_sdk();
         }
 
         //由于不包括经常更换的数据，所以存储时间为1天
         s_memcache($key, $ret, 24 * 3600);
     }
+    var_dump($ret);
+    exit();
 
     //规范标准输出
     $ret['uid']        = $ret['id'];
@@ -181,17 +185,19 @@ function s_user_post(&$weibo) {
         return false;
     }
 
+    if (!$weibo['pic'] 
+        || !$weibo['image']
+    ) {
+        unset($weibo['pic']);
+        unset($weibo['image']);
 
-    if (isset($weibo['pic'])) {
-        //发图片微博
-        $url = "http://upload.api.weibo.com/2/statuses/upload.json";
+        $url = 'https://api.weibo.com/2/statuses/update.json';
 
     } else {
-        //发文字微博
-        $url = "https://api.weibo.com/2/statuses/update.json";
+        $url = 'http://upload.api.weibo.com/2/statuses/upload.json';
     }
 
-    return s_weibo_http($url, $weibo, "post", !empty($weibo['pic']));
+    return s_weibo_http($url, $weibo, 'post', isset($weibo['pic']) || isset($weibo['image']));
 }
 
 

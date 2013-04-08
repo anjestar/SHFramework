@@ -189,45 +189,38 @@ function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
 
 
 //返回以json格式的weibo数据，此处为做error_code检查
-function s_weibo_http($url, $params=false, $method="get", $mutil=false) {
+function s_weibo_http($url, &$params=false, $method='get', $mutil=false) {
     if (false === $params) {
         $params = array();
     }
 
-    //添加用户COOKIE
-    if (isset($_COOKIE['SUE'])) {
-        $params["cookie"]["SUE"] = $_COOKIE["SUE"];
-    }
-
-    if (isset($_COOKIE['SUP'])) {
-        $params["cookie"]["SUP"] = $_COOKIE["SUP"];
-    }
-
-
-    if (isset($params['token'])) {
-        //采用oauth2验证
-        $params["access_token"] = $params['token'];
-
-    } else if (isset($params['APP_KEY'])) {
-        //指定自己的APPKEY
-        $params["source"] = $params['APP_KEY'];
-
-    } else if (defined('APP_KEY')) {
+    if (empty($params['access_token'])) {
         //采用系统指定的APP_KEY（dev/devinc.common.php指定）
-        $params["source"] = APP_KEY;
+        $params["source"] = isset($params['APP_KEY']) ? $params['APP_KEY'] : APP_KEY;
     }
+
+    //获取本地cookie
+    foreach($_COOKIE as $key => $value) {
+        $cookies[] = $key . "=" . rawurlencode($value);
+    }
+
+
+    $header     = array();
+    $header[]   = 'Cookie: '        . implode('; ', $cookies);
+    $header[]   = 'Referer: '       . $_SERVER['HTTP_REFERER'];
+    $header[]   = 'User-Agent: '    . $_SERVER['HTTP_USER_AGENT'];
+
 
     //有一些错误码不需要返回false
-    if (false === ( $data = s_http_response($url, $params, $header, $method, $mutil) )
-        || isset($data['error'])
-        || isset($data['error_code'])
+    if (false === ( $response = s_http_response($url, $params, $method, $mutil, $header, false) )
+        || false === ( $json = json_decode($response, true) )
     ) {
-        s_action_error($data['error'] . ':' . $data['request'], $data['error_code']);
+        echo $response;
 
-        exit($data['error_code']);
+        exit($json['error_code']);
     }
 
-    return $data;
+    return $json;
 }
 
 

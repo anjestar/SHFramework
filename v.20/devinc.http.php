@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-function s_http_response($url, &$params=false, $method="get", $mutil=false, $cookie=false, $header=false, $userpwd=false) {
+function s_http_response($url, &$params=false, $method="get", $mutil=false, $header=false, $userpwd=false) {
     if (s_bad_string($url)) {
         return false;
     }
@@ -42,7 +42,7 @@ function s_http_response($url, &$params=false, $method="get", $mutil=false, $coo
     curl_setopt($curl, CURLOPT_HEADER,          FALSE);
     curl_setopt($curl, CURLOPT_VERBOSE,         FALSE);
     curl_setopt($curl, CURLINFO_HEADER_OUT,     TRUE);
-    curl_setopt($curl, CURLOPT_HTTP_VERSION,    CURL_HTTP_VERSION_1_0);
+    curl_setopt($curl, CURLOPT_HTTP_VERSION,    CURL_HTTP_VERSION_NONE);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER,  TRUE);
 
 
@@ -50,26 +50,6 @@ function s_http_response($url, &$params=false, $method="get", $mutil=false, $coo
         //有用户名与密码添加到http头部
         curl_setopt($curl, CURLOPT_USERPWD, $userpwd);
     }
-
-    if (isset($_SERVER['HTTP_REFERER'])) {
-        curl_setopt($curl, CURLOPT_REFERER, $_SERVER['HTTP_REFERER']);
-    }
-
-    if (isset($_SERVER['HTTP_USER_AGENT'])) {
-        curl_setopt($curl, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-    }
-
-
-    if ($cookie === true) {
-        //携带cookie
-        foreach($_COOKIE as $key => $value) {
-            $arr[] = $key . "=" . rawurlencode($value);
-        }
-
-        $header[] = 'Cookie: ' .  implode('; ', $arr);
-    }
-
-
 
     switch(strtolower($method)) {
         case 'get':
@@ -79,17 +59,21 @@ function s_http_response($url, &$params=false, $method="get", $mutil=false, $coo
 
             $url .= '&' . http_build_query($params);
 
-            break;
+            var_dump($url);
+            exit();
+        break;
 
         default:
-            curl_setopt($curl, CURLOPT_POSTFIELDS, s_http_boundary($params, $header));
+            $body = $mutil ? s_http_boundary($params, $header) : http_build_query($params);
+
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
     }
 
 
 
     //加载URL
     curl_setopt($curl, CURLOPT_URL,             $url);
-    curl_setopt($curl, CURLOPT_HTTPHEADER,      $headers);
+    curl_setopt($curl, CURLOPT_HTTPHEADER,      $header);
 
     $ret    = curl_exec($curl);
     $code   = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -97,7 +81,10 @@ function s_http_response($url, &$params=false, $method="get", $mutil=false, $coo
 
     curl_close($curl);
 
-    if ($params['debugger'] === true) {
+    if (isset($params['debugger']) && $params['debugger'] === true) {
+        echo "\nresponse:\n";
+        var_dump($ret);
+
         echo "\nresponse:\n";
         var_dump($ret);
 
@@ -120,9 +107,6 @@ function s_http_boundary(&$params, &$header) {
     if (!is_array($header)) {
         $header = array();
     }
-
-
-    $header[] = "Content-Type: multipart/form-data; boundary={$boundary}";
 
     uksort($params, 'strcmp');
 
@@ -147,6 +131,8 @@ function s_http_boundary(&$params, &$header) {
 
     //end
     $body .= '--' . $boundary . '--';
+
+    $header[] = "Content-Type: multipart/form-data; boundary={$boundary}";
 
     return $body;
 }
