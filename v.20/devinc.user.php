@@ -51,18 +51,19 @@ function s_user_by_uid($uid, $sample=true) {
         return false;
     }
 
-	$key    = "user_by_uid#" . $uid;
+	$key = "user_by_uid#" . $uid;
 
     if (false === ( $ret = s_memcache($key) )) {
         $param  = array('uid' => $uid);
 
         if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $param) )) {
-            return s_err_sdk();
+            return false;
         }
 
         //由于不包括经常更换的数据，所以存储时间为1天
         s_memcache($key, $ret, 24 * 3600);
     }
+
 
     //规范标准输出
     $ret['uid']        = $ret['id'];

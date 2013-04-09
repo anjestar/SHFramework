@@ -207,7 +207,7 @@ function s_weibo_http($url, &$params=false, $method='get', $mutil=false) {
 
     $header     = array();
     $header[]   = 'Cookie: '        . implode('; ', $cookies);
-    $header[]   = 'Referer: '       . $_SERVER['HTTP_REFERER'];
+    $header[]   = 'Referer: '       . ( isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '' );
     $header[]   = 'User-Agent: '    . $_SERVER['HTTP_USER_AGENT'];
 
 

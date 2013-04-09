@@ -68,7 +68,7 @@ function s_action_json($data) {
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . 'GMT'); 
     header('Cache-Control: no-cache, must-revalidate'); 
     header('Pragma: no-cache');
-    header('content-type: application/json; charset=utf-8');
+    //header('content-type: application/json; charset=utf-8');
 
     echo json_encode($data);
 }
