@@ -55,6 +55,9 @@ function s_s3_upload(&$content,
     }
 
     $upload->setAuth(true);
+
+    //$upload->setExpires(time() + 2678400);
+    //$upload->setQueryStrings(array("v" => 1));
     $upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
 
     if (!( $upload->uploadFile($path, $content, strlen($content), $mime, $result, true) )) {
@@ -65,6 +68,7 @@ function s_s3_upload(&$content,
 
     return $upload->getFileUrl($path, $result);
 }
+
 
 function s_s3upload_content($content, $type='jpg', $target=false) {
     return s_s3_upload($content, $type, $target);

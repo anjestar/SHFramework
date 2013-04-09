@@ -63,6 +63,8 @@ function s_user_by_uid($uid, $sample=true) {
         //由于不包括经常更换的数据，所以存储时间为1天
         s_memcache($key, $ret, 24 * 3600);
     }
+    var_dump($ret);
+    exit();
 
     //规范标准输出
     $ret['uid']        = $ret['id'];

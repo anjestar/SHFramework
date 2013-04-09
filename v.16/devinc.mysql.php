@@ -234,7 +234,7 @@ function s_db_one($sql) {
 
     s_db_close($link);
 
-    return current($row);
+    return is_array($row) ? current($row) : false;
 }
 
 
