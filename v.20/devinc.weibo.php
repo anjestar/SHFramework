@@ -189,89 +189,38 @@ function s_weibo_list_time($list, $format="m月d日 H:i", $postfix="") {
 
 
 //返回以json格式的weibo数据，此处为做error_code检查
-function s_weibo_http($url, $params=false, $method="get") {
+function s_weibo_http($url, &$params=false, $method='get', $mutil=false) {
     if (false === $params) {
         $params = array();
     }
 
-    //添加用户COOKIE
-    if (isset($_COOKIE['SUE'])) {
-        $params["cookie"]["SUE"] = $_COOKIE["SUE"];
-    }
-
-    if (isset($_COOKIE['SUP'])) {
-        $params["cookie"]["SUP"] = $_COOKIE["SUP"];
-    }
-
-
-    if (isset($params['token'])) {
-        //采用oauth2验证
-        $params["access_token"] = $params['token'];
-
-    } else if (isset($params['APP_KEY'])) {
-        //指定自己的APPKEY
-        $params["source"] = $params['APP_KEY'];
-
-    } else if (defined('APP_KEY')) {
+    if (empty($params['access_token'])) {
         //采用系统指定的APP_KEY（dev/devinc.common.php指定）
-        $params["source"] = APP_KEY;
+        $params["source"] = isset($params['APP_KEY']) ? $params['APP_KEY'] : APP_KEY;
+    }
+
+    //获取本地cookie
+    foreach($_COOKIE as $key => $value) {
+        $cookies[] = $key . "=" . rawurlencode($value);
     }
 
 
-    //上传图片。有两种情况
-    //  1、@/image/web.jpg
-    //  2、图片数据
-    //
-    if (isset($params["pic"])
-        && is_string($params["pic"])
-    ) {
-        //检查数据是二进制文件还是路径
-        $params["_name"] = "pic";
-
-        if ( substr($params["pic"], 0, 1) === '@' ) {
-            //@是路径
-            $params["_data"] = file_get_contents(substr($params["pic"], 1));
-
-        } else {
-            //直接使用
-            $params["_data"] = $params["pic"];
-        }
-
-
-        unset($params["pic"]);
-    }
-
-    //上传头像
-    if (isset($params["image"])
-        && is_string($params["image"])
-    ) {
-        //检查数据是二进制文件还是路径
-        $params["_name"] = "image";
-
-        if ( substr($params["image"], 0, 1) === '@' ) {
-            //@是路径
-            $params["_data"] = file_get_contents(substr($params["image"], 1));
-
-        } else {
-            //是图片数据
-            $params["_data"] = $params["image"];
-        }
-
-        unset($params["image"]);
-    }
+    $header     = array();
+    $header[]   = 'Cookie: '        . implode('; ', $cookies);
+    $header[]   = 'Referer: '       . $_SERVER['HTTP_REFERER'];
+    $header[]   = 'User-Agent: '    . $_SERVER['HTTP_USER_AGENT'];
 
 
     //有一些错误码不需要返回false
-    if (false === ( $data = s_http_json($url, $params, $method) )
-        || isset($data['error'])
-        || isset($data['error_code'])
+    if (false === ( $response = s_http_response($url, $params, $method, $mutil, $header, false) )
+        || false === ( $json = json_decode($response, true) )
     ) {
-        s_action_error($data['error'] . ':' . $data['request'], $data['error_code']);
+        echo $response;
 
-        exit($data['error_code']);
+        exit($json['error_code']);
     }
 
-    return $data;
+    return $json;
 }
 
 

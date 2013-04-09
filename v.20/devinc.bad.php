@@ -279,6 +279,27 @@ function s_bad_get($key, &$var=false, $type="string", $html=true) {
 }
 
 
+//返回$_FILE中的数据
+function s_bad_upload($key, &$var=false, $type='image', $size=2) {
+    if (s_bad_string($key)
+        || !isset($_FILES[$key])
+        || false === ( $file  = &$_FILES[$key] )
+        || 0     !== ( $error = $file['error'] )
+        || false === ( $type  = $file['type'] )
+        || false === ( $size  = $file['size'] )
+    ) {
+        return true;
+    }
+
+    if ($var !== false) {
+        $var = $file;
+    }
+
+    return false;
+}
+
+
+
 function s_bad_gd() {
     return extension_loaded('gd') === false;
 }
