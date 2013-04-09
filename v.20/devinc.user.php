@@ -63,8 +63,6 @@ function s_user_by_uid($uid, $sample=true) {
         //由于不包括经常更换的数据，所以存储时间为1天
         s_memcache($key, $ret, 24 * 3600);
     }
-    var_dump($ret);
-    exit();
 
     //规范标准输出
     $ret['uid']        = $ret['id'];
@@ -185,19 +183,15 @@ function s_user_post(&$weibo) {
         return false;
     }
 
-    if (!$weibo['pic'] 
-        || !$weibo['image']
-    ) {
+    if (empty($weibo['pic'])) {
         unset($weibo['pic']);
-        unset($weibo['image']);
-
-        $url = 'https://api.weibo.com/2/statuses/update.json';
-
-    } else {
-        $url = 'http://upload.api.weibo.com/2/statuses/upload.json';
     }
 
-    return s_weibo_http($url, $weibo, 'post', isset($weibo['pic']) || isset($weibo['image']));
+    $url = isset($weibo['pic'])
+        ? 'http://upload.api.weibo.com/2/statuses/upload.json'
+        : 'https://api.weibo.com/2/statuses/update.json';
+
+    return s_weibo_http($url, $weibo, 'post', isset($weibo['pic']));
 }
 
 

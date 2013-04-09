@@ -24,7 +24,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-require("SinaService/SinaStorageService/SinaStorageService.php");
+if (is_readable("SinaService/SinaStorageService/SinaStorageService.php")) {
+    include("SinaService/SinaStorageService/SinaStorageService.php");
+}
 
 //上传内容到S3中
 function s_s3_upload(&$content,
