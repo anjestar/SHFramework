@@ -24,9 +24,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-if (is_readable("SinaService/SinaStorageService/SinaStorageService.php")) {
-    include("SinaService/SinaStorageService/SinaStorageService.php");
-}
+//if (is_readable("SinaService/SinaStorageService/SinaStorageService.php")) {
+    require("SinaService/SinaStorageService/SinaStorageService.php");
+//}
 
 //上传内容到S3中
 function s_s3_upload(&$content,
@@ -39,9 +39,13 @@ function s_s3_upload(&$content,
             //密钥
             $key='SINA00000000000SALES', $secret='tyYXmhVGXmvJJJiwfeoqTOqCdKV/haHqrnwK0Pjy') {
 
-    if ($content === false
-        || !( $upload = SinaStorageService::getInstance($domain, $key, $secret) )
+    if (//false === class_exists(SinaStorageService)
+
+        //|| false === $content
+        false === $content
+        || false === ( $upload = SinaStorageService::getInstance($domain, $key, $secret) )
     ) {
+        echo "false";
         return false;
     }
 
@@ -56,19 +60,25 @@ function s_s3_upload(&$content,
         $path = 'shframework/' . date('Y') . '/' . rand(0, 364) . '/' . time() . rand(3, 100) . '.' . $type;
     }
 
-    $upload->setAuth(true);
 
+    $upload->setAuth(true);
     //$upload->setExpires(time() + 2678400);
     //$upload->setQueryStrings(array("v" => 1));
-    $upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
+    //$upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
 
     if (!( $upload->uploadFile($path, $content, strlen($content), $mime, $result, true) )) {
         return false;
     }
 
     $upload = SinaStorageService::getInstance($domain, $key, $secret, true);
+    //setAuth会设置ssig等验证字符串
+    //$upload->setAuth(true);
+    //$upload->setQueryStrings(array("v" => 1));
+    //$upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
+    $upload->getFileUrl($path, $result);
 
-    return $upload->getFileUrl($path, $result);
+    return $upload->getFileUrl($path, $result) ? $result : false;
+
 }
 
 
