@@ -167,5 +167,83 @@ function s_s3upload_mime($type) {
         'flv'       => 'flv-application/octet-stream'
     );
 
-    return $mimes[$type];
+    return isset($mimes[$type]) ? $mimes[$type] : 'unknow/unknow';
+}
+
+function s_s3upload_type($mime) {
+    $mimes = array(
+        'image/gif'                     => 'gif',
+        'image/jpeg'                    => 'jpg',
+        'image/jpeg'                    => 'jpeg',
+        'image/jpeg'                    => 'jpe',
+        'image/bmp'                     => 'bmp',
+        'image/png'                     => 'png',
+        'image/tiff'                    => 'tif',
+        'image/tiff'                    => 'tiff',
+        'image/x-pict'                  => 'pict',
+        'image/x-pict'                  => 'pic',
+        'image/x-pict'                  => 'pct',
+        'image/tiff'                    => 'tif',
+        'image/tiff'                    => 'tiff',
+        'image/x-photoshop'             => 'psd',
+        'image/vnd.wap.wbmp'            => 'wbmp',
+
+        'text/css'                      => 'css',
+        'text/html'                     => 'htm',
+        'text/html'                     => 'html',
+        'text/plain'                    => 'txt',
+        'text/xml'                      => 'xml',
+        'text/wml'                      => 'wml',
+        'text/x-uuencode'               => 'uu',
+        'text/x-uuencode'               => 'uue',
+
+        'audio/midi'                    => 'mid',
+        'audio/wav'                     => 'wav',
+        'audio/mpeg'                    => 'mp3',
+        'audio/mpeg'                    => 'mp2',
+        
+        'video/x-msvideo'               => 'avi',
+        'video/mpeg'                    => 'mpeg',
+        'video/mpeg'                    => 'mpg',
+        'video/quicktime'               => 'qt',
+        'video/quicktime'               => 'mov',
+
+        'application/x-compress'        => 'z',
+        'application/pdf'               => 'pdf',
+        'application/x-shockwave-flash' => 'swf',
+        'application/x-javascrīpt'      => 'js',
+        'application/postscrīpt'        => 'ps',
+        'application/postscrīpt'        => 'eps',
+        'application/postscrīpt'        => 'ai',
+        'application/x-msmetafile'      => 'wmf',
+        'application/x-lha'             => 'lha',
+        'application/x-lha'             => 'lzh',
+        'application/x-gtar'            => 'gtar',
+        'application/x-gzip'            => 'gz',
+        'application/x-gzip'            => 'gzip',
+        'application/x-gzip'            => 'tgz',
+        'application/x-tar'             => 'tar',
+        'application/bzip2'             => 'bz2',
+        'application/zip'               => 'zip',
+        'application/x-arj'             => 'arj',
+        'application/x-rar-compressed'  => 'rar',
+        'application/mac-binhex40'      => 'hqx',
+        'application/x-stuffit'         => 'sit',
+        'application/x-macbinary'       => 'bin',
+        'application/x-latex'           => 'latex',
+        'application/x-latex'           => 'ltx',
+        'application/x-tcl'             => 'tcl',
+        'application/pgp'               => 'pgp',
+        'application/pgp'               => 'asc',
+        'application/x-msdownload'      => 'exe',
+        'application/msword'            => 'doc',
+        'application/rtf'               => 'rtf',
+        'application/vnd.ms-excel'      => 'xls',
+        'application/vnd.ms-powerpoint' => 'ppt',
+        'application/x-msaccess'        => 'mdb',
+        'application/x-mswrite'         => 'wri',
+        'flv-application/octet-stream'  => 'flv',
+    );
+
+    return isset($mimes[$mime]) ? $mimes[$mime] : 'ukw';
 }

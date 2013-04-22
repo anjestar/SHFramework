@@ -108,21 +108,25 @@ function s_action_data() {
 
 //返回用户的IP地址
 function s_action_ip() {
+    $ip = '';
     if (isset($_SERVER['HTTP_CLIENT_IP'])) {
         //客户IP地址
-        return $_SERVER['HTTP_CLIENT_IP'];
+        $ip .= ',' . $_SERVER['HTTP_CLIENT_IP'];
 
     } else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         //经过代理服务器的IP地址列表
-        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+        $ip .= ',' .  $_SERVER['HTTP_X_FORWARDED_FOR'];
 
     } else if(isset($_SERVER['REMOTE_ADDR'])) {
         //可能是代理服务器的最后一个IP地址
-        return $_SERVER['REMOTE_ADDR'];
+        $ip .= ',' .  $_SERVER['REMOTE_ADDR'];
+
     } else {
         //没有了，返回默认的IPV4
-        return '000.000.000.000';
+        $ip .= '000.000.000.000';
     }
+
+    return $ip;
 }
 
 

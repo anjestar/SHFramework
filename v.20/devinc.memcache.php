@@ -14,6 +14,28 @@
 define('MEM_CACHE_KEY_PREFIX', $_SERVER['SINASRV_MEMCACHED_KEY_PREFIX']);
 
 
+//对memcached操作
+function s_memcache($key, &$value=false, $time=300) {
+    if (s_bad_string($key)) {
+        return false;
+    }
+
+    $key = s_memcache_key($key);
+
+    if ($value === false) {
+        //获取memcache值
+        return s_memcache_get($key);
+
+    } else {
+        //设置memcache值
+        return s_memcache_set($key, $value, $time);
+    }
+    
+
+    return false;
+}
+
+
 //使用本地IDC的memcache
 function &s_memcache_local() {
     $mc = new Memcache;
@@ -60,28 +82,6 @@ function s_memcache_key(&$key) {
     }
 
     return md5(MEM_CACHE_KEY_PREFIX . $app . $key);
-}
-
-
-//对memcached操作
-function s_memcache($key, &$value=false, $time=300) {
-    if (s_bad_string($key)) {
-        return false;
-    }
-
-    $key = s_memcache_key($key);
-
-    if ($value === false) {
-        //获取memcache值
-        return s_memcache_get($key);
-
-    } else {
-        //设置memcache值
-        return s_memcache_set($key, $value, $time);
-    }
-    
-
-    return false;
 }
 
 

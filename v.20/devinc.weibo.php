@@ -102,6 +102,24 @@ function s_weibo_sample(&$weibo, $timeshow='ago', $autolink=true) {
     return $weibo;
 }
 
+
+
+//对微博的数据简单的处理下
+function s_weibo_sample_list(&$list, $timeshow='ago', $autolink=true) {
+    if (s_bad_array($list)) {
+        return false;
+    }
+
+    foreach ($list as &$item) {
+        s_weibo_sample($item, $timeshow, $autolink);
+
+        unset($item);
+    }
+
+    return $list;
+}
+
+
 function s_weibo_list_ago($list) {
     if (s_bad_array($list)) {
         return false;

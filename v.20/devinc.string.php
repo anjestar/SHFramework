@@ -70,6 +70,18 @@ function s_string_face(&$weibo) {
         return false;
     }
 
+    //获取表情列表
+    $mkey = 'face_get';
+    if (!( $rep = s_memcache($mkey) )) {
+        //未在缓存中存在
+        if (( $rep = s_http_response('https://api.weibo.com/2/emotions.json?source=1362404091&_=1365667265344') )) {
+            //缓存1天
+            s_memcache($mkey, $rep, 86400);
+        }
+    }
+
+//    $json = json_decode($rep);
+
     return $weibo;
     //return preg_replace("/\#(.*)\#/iUs", "<a href=\"http://s.weibo.com/weibo/$1\" target=\"_blank\">$0</a>", $weibo); 
 }

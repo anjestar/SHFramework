@@ -309,3 +309,37 @@ function s_bad_gd() {
 function s_bad_ajax() {
     return !isset($_SERVER['X-Requested-With']) || isset($_SERVER['X-Requested-With']) !== 'XMLHttpRequest';
 }
+
+
+function s_bad_referer($referer=false, $other=false) {
+    if (!isset($_SERVER['HTTP_HOST'])) {
+        return false;
+    }
+
+    $hosts = array(
+        'weibo.cn',
+        'weibo.com',
+        'sina.com',
+        'sina.com.cn',
+    );
+
+    if (!s_bad_string($other)) {
+        $hosts[] = $other;
+    }
+
+    $host = $_SERVER['HTTP_HOST'];
+
+    foreach ($hosts as &$item) {
+        if (preg_match("/{$item}$/i", $host)) {
+            if (false !== $referer) {
+                $referer = $_SERVER['HTTP_REFERER'];
+            }
+
+            return false;
+        }
+
+        unset($item);
+    }
+
+    return true;
+}
