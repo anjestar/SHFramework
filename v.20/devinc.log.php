@@ -18,7 +18,7 @@
 //
 //	s_err_arg($log)
 //
-//	s_err_sql($log)
+//	s_error($log)
 //
 //	s_err_action($log)
 //
@@ -94,7 +94,7 @@ function s_err_arg($log="warning arg") {
     return s_log('ARG:' . $log);
 }
 
-function s_err_sql($log="warning sql") {
+function s_error($log="warning sql") {
     return s_log('SQL:' . $log);
 }
 
