@@ -51,7 +51,7 @@ function s_user_by_uid($uid, $sample=true) {
         return false;
     }
 
-	$key = "user_by_uid#" . $uid;
+	$key = "!user_by_uid#" . $uid;
 
     if (false === ( $ret = s_memcache($key) )) {
         $param  = array('uid' => $uid);

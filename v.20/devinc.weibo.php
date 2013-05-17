@@ -22,7 +22,11 @@ function s_weibo_by_wid($wid) {
     $key = 'weibo_by_wid#' . $wid;
 
     if (false === ( $data = s_memcache($key) )) {
-        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', array('id'=>$wid)) )) {
+        $param = array(
+            'id'    => $wid,
+        );
+
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', $param) )) {
             //有些微博会被删除，所以不提示
             return false;
         }
@@ -233,7 +237,7 @@ function s_weibo_http($url, &$params=false, $method='get', $mutil=false) {
     if (false === ( $response = s_http_response($url, $params, $method, $mutil, $header, false) )
         || false === ( $json = json_decode($response, true) )
     ) {
-        echo $response;
+        s_action_error($json['error'], $json['error_code']);
 
         exit($json['error_code']);
     }
@@ -451,45 +455,6 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 }
 
 
-//转发列表（内部接口）
-function s_weibo_forwards($wid, $page=1, $size=20, $type='api') {
-    if (s_bad_id($wid)
-        || s_bad_id($page)
-        || s_bad_id($size)
-        || s_bad_string($type)
-    ) {
-        return false;
-    }
-
-
-    //看cache中是否存在
-    $mkey = "weibo_forwards#"
-        . 'wid='    . $wid
-        . 'page='   . $page
-        . 'size='   . $size
-        . 'type='   . $type;
-
-    if (false === ( $data = s_memcache($mkey) )) {
-        //缓存中没有，请求服务器
-        $params = array(
-            'id'        => $wid,
-            'page'      => $page,
-            'count'     => $size,
-        );
-
-
-        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/repost_timeline.json', $params) )) {
-            return false;
-        }
-
-        //缓存起来60秒
-        s_memcache($mkey, $data, 60);
-    }
-
-    return $data;
-}
-
-
 //微博关注列表微博主键
 function s_weibo_forward_ids($wid, $since_id=0, $max_id=0) {
     if (s_bad_id($wid)
@@ -543,66 +508,6 @@ function s_weibo_forward_ids($wid, $since_id=0, $max_id=0) {
 
     //返回整个微博转发列表的微博主键
     return $ret;
-}
-
-
-
-//搜索微博数据（内部接口）
-function s_weibo_search($sid, $uid=false, $key=false, $page=1, $size=10, $istag=0, $sort='time', $start=false, $end=false) {
-    if (s_bad_string($sid)) {
-        return s_err_arg();
-    }
-
-
-    //看cache中是否存在
-    $mkey = "weibo_search#"
-        . 'uid='    . $uid
-        . 'key='    . $key
-        . 'page='   . $page
-        . 'size='   . $size
-        . 'istag='  . $istag
-        . 'sort='   . $sort
-        . 'start='  . $start
-        . 'end='    . $end
-        . 'sid='    . $sid;
-
-    if (false === ( $data = s_memcache($mkey) )) {
-        //缓存中没有，请求服务器
-        $params = array(
-            'sid'       => $sid,
-            'page'      => $page,
-            'count'     => $size,
-        );
-
-        if (is_string($key)) {
-            $params['q'] = $key;
-        }
-
-        if (!s_bad_0id($istag)) {
-            $params['istag'] = $istag;
-        }
-
-        if (!s_bad_id($uid)) {
-            $params['uid'] = $uid;
-        }
-
-        if (!s_bad_id($start)) {
-            $params['starttime'] = $start;
-        }
-
-        if (!s_bad_id($end)) {
-            $params['endtime'] = $end;
-        }
-
-        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/search/statuses.json', $params) )) {
-            return false;
-        }
-
-        //缓存起来60秒
-        s_memcache($mkey, $data, 60);
-    }
-
-    return $data;
 }
 
 

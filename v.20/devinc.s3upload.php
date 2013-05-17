@@ -45,7 +45,6 @@ function s_s3_upload(&$content,
         false === $content
         || false === ( $upload = SinaStorageService::getInstance($domain, $key, $secret) )
     ) {
-        echo "false";
         return false;
     }
 

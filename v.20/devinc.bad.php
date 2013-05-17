@@ -311,7 +311,7 @@ function s_bad_ajax() {
 }
 
 
-function s_bad_referer($referer=false, $other=false) {
+function s_bad_referer(&$referer=false, $other=false) {
     if (!isset($_SERVER['HTTP_HOST'])) {
         return false;
     }
@@ -331,7 +331,9 @@ function s_bad_referer($referer=false, $other=false) {
 
     foreach ($hosts as &$item) {
         if (preg_match("/{$item}$/i", $host)) {
-            if (false !== $referer) {
+            if (false !== $referer
+                && isset($_SERVER['HTTP_REFERER'])
+            ) {
                 $referer = $_SERVER['HTTP_REFERER'];
             }
 
