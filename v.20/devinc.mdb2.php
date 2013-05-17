@@ -65,7 +65,7 @@ function &s_db_plink() {
 
 	$db = MDB2::connect($dsn);
 	if (MDB2::isError($db)) {
-        die(s_err_sql($db->getMessage()));
+        die(s_error($db->getMessage()));
 	}
 
 	$db->setFetchMode(MDB2_FETCHMODE_ASSOC);
@@ -87,7 +87,7 @@ function &s_db_slink() {
 
 	$db = MDB2::connect($dsn);
 	if (MDB2::isError($db)) {
-        die(s_err_sql($db->getMessage()));
+        die(s_error($db->getMessage()));
     }
 
     $db->setFetchMode(MDB2_FETCHMODE_ASSOC);
@@ -129,7 +129,7 @@ function s_db_list($sql) {
     s_db_close($db);
 
     if (PEAR::isError($ret)) {
-        s_err_sql($ret->getMessage());
+        s_error($ret->getMessage());
 
         $ret = false;
     }
@@ -157,7 +157,7 @@ function s_db_row($sql) {
     s_db_close($db);
 
     if (PEAR::isError($ret)) {
-        s_err_sql($ret->getMessage());
+        s_error($ret->getMessage());
 
         $ret = false;
     }
@@ -188,7 +188,7 @@ function s_db_one($sql, $prefix=true) {
     s_db_close($db);
 
     if (PEAR::isError($ret)) {
-        s_err_sql($ret->getMessage());
+        s_error($ret->getMessage());
 
         $ret = false;
     }
@@ -219,7 +219,7 @@ function s_db_exec($sql) {
 
     if (PEAR::isError($ret)) {
         //记录失败
-        s_err_sql($ret->getMessage());
+        s_error($ret->getMessage());
 
         $ret = false;
     }
