@@ -74,6 +74,12 @@ function s_log_off() {
 //E_USER_NOTICE	- 默认。用户生成的 run-time 通知。脚本发现了可能的错误，也有可能在脚本运行正常时发生。
 function s_log($log=false, $level=E_USER_NOTICE) {
     global $_traces;
+    global $log_on;
+
+    if ($log_on === false) {
+        return false;
+    }
+    
 
     $trace          = debug_backtrace();
     $trace['msg']   = $log;
