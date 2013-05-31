@@ -28,18 +28,18 @@ function s_badge_new($uid, $bid, $username, $password) {
 
     if (false === ( $data = s_memcache($key) )) {
         $data = array(
+            'source'    => APP_KEY,
             'badge_id'  => $bid,
             'uids'      => $uid,
             '_username' => $username,
             '_password' => $password,
         );
 
-        if (false === ( $data = s_badge_http('http://api.t.sina.com.cn/badges/app/issue.json?source=' . APP_KEY, $data, 'post') )) {
-            return s_err_sdk();
-        }
 
-        //缓存一小时
-        s_memcache($key, $data, 3600);
+        if (( $data = s_badge_http('http://i2.api.weibo.com/2/proxy/badges/issue.json', $data, 'post') )) {
+            //缓存一小时
+            s_memcache($key, $data, 3600);
+        }
     }
 
     return $data;
@@ -53,10 +53,8 @@ function s_badge_http($url, $params=false, $method='post') {
     }
 
     if (false === ( $data = s_http_json($url, $params, $method) )) {
-        var_dump($data);
         return false;
     }
-        var_dump($data);
 
     return $data;
 }
