@@ -79,9 +79,12 @@ function s_s3_upload(&$content,
     //return $upload->getFileUrl($path, $result) ? $result : false;
 
 
-    $url = $upload->getFileUrl($path, $result);
+    if (!( $upload->getFileUrl($path, $result) )) {
+        //上传失败
+        return false;
+    }
 
-    return $url ? str_replace('sinastorage.com/video.vic.sina.com.cn', 'file.vic.sina.com.cn') : false;
+    return 'http://image.vic.sina.com.cn/' . $path;
 }
 
 
