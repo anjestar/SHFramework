@@ -74,10 +74,14 @@ function s_s3_upload(&$content,
     //$upload->setAuth(true);
     //$upload->setQueryStrings(array("v" => 1));
     //$upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
-    $upload->getFileUrl($path, $result);
+    //$upload->getFileUrl($path, $result);
 
-    return $upload->getFileUrl($path, $result) ? $result : false;
+    //return $upload->getFileUrl($path, $result) ? $result : false;
 
+
+    $url = $upload->getFileUrl($path, $result);
+
+    return $url ? str_replace('sinastorage.com/video.vic.sina.com.cn', 'file.vic.sina.com.cn') : false;
 }
 
 
