@@ -172,6 +172,7 @@ function s_bad_post($key, &$var=false, $type="string", $escape=true) {
             return true;
         }
 
+
         //检查post值是否需要转义
         if ($escape === true) {
             $var = s_safe_html($var);
@@ -259,6 +260,9 @@ function s_bad_get($key, &$var=false, $type="string", $html=true) {
 
     } else if ($type === "int0") {
         return s_bad_0id($_GET[$key], $var);
+
+    } else if ($type === 'array') {
+        return s_bad_array($_GET[$key], $var);
 
     } else if ($type === "email") {
         //邮箱

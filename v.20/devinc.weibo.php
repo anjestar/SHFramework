@@ -540,8 +540,6 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
     }
 
 
-    $mkey = 'weibo_notice_by_uids#uids=' . $_uids . 'tid=' . $tid . 'keys=' . $_keys . 'url=' . $url . 'noticeid' . $noticeid;
-    if (false === ( $data = s_memcache($mkey) )) {
         $data = array(
             'uids'      => $_uids,
             'tpl_id'    => $tid,
@@ -567,9 +565,6 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
             return s_err_sdk();
         }
 
-        //缓存一小时
-        //s_memcache($mkey, $data, 3600);
-    }
 
     return $data;
 }

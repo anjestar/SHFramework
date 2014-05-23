@@ -42,6 +42,7 @@ function s_action_user($update=true) {
         return $cookie;
     }
 
+
     //需要从weibo平台中获取用户信息
     return s_user_by_uid($uniqueid);
 }
@@ -68,7 +69,7 @@ function s_action_json($data) {
     header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . 'GMT'); 
     header('Cache-Control: no-cache, must-revalidate'); 
     header('Pragma: no-cache');
-    //header('content-type: application/json; charset=utf-8');
+    header('Content-Type: text/html; charset=utf-8');
 
     echo json_encode($data);
 }
@@ -127,6 +128,13 @@ function s_action_ip() {
     }
 
     return $ip;
+}
+
+
+function s_action_token() {
+    //返回session中token值
+    return $_SESSION && isset($_SESSION['access_token']) ? $_SESSION['access_token'] : false;
+
 }
 
 

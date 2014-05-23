@@ -657,7 +657,7 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
     }
 
 
-    $mkey = 'weibo_notice_by_uids#uids=' . $_uids . 'tid=' . $tid . 'keys=' . $_keys . 'url=' . $url . 'noticeid' . $noticeid;
+    $mkey = '!!weibo_notice_by_uids#uids=' . $_uids . 'tid=' . $tid . 'keys=' . $_keys . 'url=' . $url . 'noticeid' . $noticeid;
     if (false === ( $data = s_memcache($mkey) )) {
         $data = array(
             'uids'      => $_uids,
@@ -679,8 +679,7 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
             $data['_APP_KEY'] = $noticeid;
         }
 
-
-        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/notification/send.json', $data, 'post') )) {
+        if (false === ( $data = s_weibo_http('http://api.weibo.com/2/notification/send.json', $data, 'post') )) {
             return s_err_sdk();
         }
 

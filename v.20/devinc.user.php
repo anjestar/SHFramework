@@ -56,8 +56,11 @@ function s_user_by_uid($uid, $sample=true) {
     if (false === ( $ret = s_memcache($key) )) {
         $param  = array('uid' => $uid);
 
-        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $param) )) {
-            return false;
+        if (false === ( $ret = s_weibo_http("https://api.weibo.com/2/users/show.json", $param) )
+            || isset($ret['error'])
+        ) {
+            echo json_encode($ret);
+            exit();
         }
 
         //由于不包括经常更换的数据，所以存储时间为1天
