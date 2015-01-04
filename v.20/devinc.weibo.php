@@ -451,6 +451,7 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 }
 
 
+
 //转发列表（内部接口）
 function s_weibo_forwards($wid, $page=1, $size=20, $type='api') {
     if (s_bad_id($wid)

@@ -48,7 +48,7 @@ function s_smarty($tpl, &$assign=false) {
 
 
 //返回渲染tpl后的字符串
-function s_smarty_tpl($tpl) {
+function s_smarty_tpl($tpl, &$assign=false) {
     if (!is_file($tpl)
         || !is_readable($tpl)
     ) {
@@ -59,11 +59,11 @@ function s_smarty_tpl($tpl) {
     $smarty = s_smarty_object();
 
     try {
-        return  $smarty->fetch($tpl);
+        $smarty->assign($assign);
 
     } catch (SmartyException $se) {
-
-        return s_log($se->getMessage());
     }
+
+    return  $smarty->fetch($tpl);
 }
 
