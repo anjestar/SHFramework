@@ -298,6 +298,7 @@ function s_user_follow($suid, $tuid) {
         return false;
     }
 
+
     //2.0接口返回程序未被授权
     return s_weibo_http("https://api.weibo.com/2/friendships/create.json", array('uid' => $suid), "post");
 }

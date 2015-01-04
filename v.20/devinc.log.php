@@ -94,10 +94,6 @@ function s_err_arg($log="warning arg") {
     return s_log('ARG:' . $log);
 }
 
-function s_error($log="warning sql") {
-    return s_log('SQL:' . $log);
-}
-
 function s_err_sdk($log="warning sdk") {
     return s_log('SDK:' . $log);
 }

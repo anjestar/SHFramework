@@ -213,7 +213,9 @@ function s_db_exec($sql) {
         $sql = str_replace('%s_', APP_DB_PREFIX . '_', $sql, $count);
     }
 
+
     $ret = $db->exec($sql);
+
 
     if (PEAR::isError($ret)) {
         //记录失败

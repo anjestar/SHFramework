@@ -22,7 +22,11 @@ function s_weibo_by_wid($wid) {
     $key = 'weibo_by_wid#' . $wid;
 
     if (false === ( $data = s_memcache($key) )) {
-        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', array('id'=>$wid)) )) {
+        $param = array(
+            'id'    => $wid,
+        );
+
+        if (false === ( $data = s_weibo_http('https://api.weibo.com/2/statuses/show.json', $param) )) {
             //有些微博会被删除，所以不提示
             return false;
         }
@@ -233,7 +237,7 @@ function s_weibo_http($url, &$params=false, $method='get', $mutil=false) {
     if (false === ( $response = s_http_response($url, $params, $method, $mutil, $header, false) )
         || false === ( $json = json_decode($response, true) )
     ) {
-        echo $response;
+        s_action_error($json['error'], $json['error_code']);
 
         exit($json['error_code']);
     }
@@ -451,7 +455,6 @@ function s_weibo_detail_by_mid($mid, $key=false) {
 }
 
 
-
 //转发列表（内部接口）
 function s_weibo_forwards($wid, $page=1, $size=20, $type='api') {
     if (s_bad_id($wid)
@@ -548,66 +551,6 @@ function s_weibo_forward_ids($wid, $since_id=0, $max_id=0) {
 
 
 
-//搜索微博数据（内部接口）
-function s_weibo_search($sid, $uid=false, $key=false, $page=1, $size=10, $istag=0, $sort='time', $start=false, $end=false) {
-    if (s_bad_string($sid)) {
-        return s_err_arg();
-    }
-
-
-    //看cache中是否存在
-    $mkey = "weibo_search#"
-        . 'uid='    . $uid
-        . 'key='    . $key
-        . 'page='   . $page
-        . 'size='   . $size
-        . 'istag='  . $istag
-        . 'sort='   . $sort
-        . 'start='  . $start
-        . 'end='    . $end
-        . 'sid='    . $sid;
-
-    if (false === ( $data = s_memcache($mkey) )) {
-        //缓存中没有，请求服务器
-        $params = array(
-            'sid'       => $sid,
-            'page'      => $page,
-            'count'     => $size,
-        );
-
-        if (is_string($key)) {
-            $params['q'] = $key;
-        }
-
-        if (!s_bad_0id($istag)) {
-            $params['istag'] = $istag;
-        }
-
-        if (!s_bad_id($uid)) {
-            $params['uid'] = $uid;
-        }
-
-        if (!s_bad_id($start)) {
-            $params['starttime'] = $start;
-        }
-
-        if (!s_bad_id($end)) {
-            $params['endtime'] = $end;
-        }
-
-        if (false === ( $data = s_weibo_http('http://i2.api.weibo.com/2/search/statuses.json', $params) )) {
-            return false;
-        }
-
-        //缓存起来60秒
-        s_memcache($mkey, $data, 60);
-    }
-
-    return $data;
-}
-
-
-
 //推送通知（高级接口）
 //      如果turl为false，会转换成http://t.cn/SADAxdda短链。为true时不转成短链
 //
@@ -636,8 +579,6 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
     }
 
 
-    $mkey = 'weibo_notice_by_uids#uids=' . $_uids . 'tid=' . $tid . 'keys=' . $_keys . 'url=' . $url . 'noticeid' . $noticeid;
-    if (false === ( $data = s_memcache($mkey) )) {
         $data = array(
             'uids'      => $_uids,
             'tpl_id'    => $tid,
@@ -663,9 +604,6 @@ function s_weibo_notice(&$uids, $tid, $keys=false, $url=false, $noticeid=false) 
             return s_err_sdk();
         }
 
-        //缓存一小时
-        //s_memcache($mkey, $data, 3600);
-    }
 
     return $data;
 }
@@ -695,4 +633,3 @@ function s_weibo_surl($url) {
 
     return $data;
 }
-

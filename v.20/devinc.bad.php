@@ -172,6 +172,7 @@ function s_bad_post($key, &$var=false, $type="string", $escape=true) {
             return true;
         }
 
+
         //检查post值是否需要转义
         if ($escape === true) {
             $var = s_safe_html($var);
@@ -260,6 +261,9 @@ function s_bad_get($key, &$var=false, $type="string", $html=true) {
     } else if ($type === "int0") {
         return s_bad_0id($_GET[$key], $var);
 
+    } else if ($type === 'array') {
+        return s_bad_array($_GET[$key], $var);
+
     } else if ($type === "email") {
         //邮箱
         return s_bad_email($_GET[$key], $var);
@@ -311,7 +315,7 @@ function s_bad_ajax() {
 }
 
 
-function s_bad_referer($referer=false, $other=false) {
+function s_bad_referer(&$referer=false, $other=false) {
     if (!isset($_SERVER['HTTP_HOST'])) {
         return false;
     }
@@ -331,7 +335,9 @@ function s_bad_referer($referer=false, $other=false) {
 
     foreach ($hosts as &$item) {
         if (preg_match("/{$item}$/i", $host)) {
-            if (false !== $referer) {
+            if (false !== $referer
+                && isset($_SERVER['HTTP_REFERER'])
+            ) {
                 $referer = $_SERVER['HTTP_REFERER'];
             }
 

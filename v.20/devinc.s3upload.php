@@ -45,7 +45,6 @@ function s_s3_upload(&$content,
         false === $content
         || false === ( $upload = SinaStorageService::getInstance($domain, $key, $secret) )
     ) {
-        echo "false";
         return false;
     }
 
@@ -75,10 +74,17 @@ function s_s3_upload(&$content,
     //$upload->setAuth(true);
     //$upload->setQueryStrings(array("v" => 1));
     //$upload->setCURLOPTs(array(CURLOPT_VERBOSE => 1));
-    $upload->getFileUrl($path, $result);
+    //$upload->getFileUrl($path, $result);
 
-    return $upload->getFileUrl($path, $result) ? $result : false;
+    //return $upload->getFileUrl($path, $result) ? $result : false;
 
+
+    if (!( $upload->getFileUrl($path, $result) )) {
+        //上传失败
+        return false;
+    }
+
+    return 'http://image.vic.sina.com.cn/' . $path;
 }
 
 

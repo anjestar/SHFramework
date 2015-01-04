@@ -34,8 +34,8 @@ function s_badge_new($uid, $bid, $username, $password) {
             '_password' => $password,
         );
 
-        if (false === ( $data = s_badge_http('http://api.t.sina.com.cn/badges/app/issue.json?source=' . APP_KEY, $data, 'post') )) {
-            return s_err_sdk();
+        if (false === ( $data = s_badge_http('http://api.weibo.com/2/proxy/badges/issue.json?source=' . APP_KEY, $data, 'post') )) {
+            return false;
         }
 
         //缓存一小时

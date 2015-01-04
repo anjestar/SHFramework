@@ -65,7 +65,7 @@ function s_http_response($url, &$params=false, $method="get") {
     }
 
     if (isset($params['_password'])) {
-        $userpass = $userpass . ':' . $params['_username'];
+        $userpass = $userpass . ':' . $params['_password'];
     }
 
     if ($userpass) {
